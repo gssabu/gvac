@@ -1,4 +1,5 @@
 /*
+Library from SparkFun_ICM-20948_ArduinoLibrary
 A C++ interface to the ICM-20948
 */
 

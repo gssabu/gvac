@@ -64,11 +64,11 @@ ROBOT ORIENTATION
 #define MOTOR2_ENCODER_A 0
 #define MOTOR2_ENCODER_B 1 
 
-//#define MOTOR3_ENCODER_A 17
-//#define MOTOR3_ENCODER_B 16 
+#define MOTOR3_ENCODER_A 50
+#define MOTOR3_ENCODER_B 51 
 
-//#define MOTOR4_ENCODER_A 9
-//#define MOTOR4_ENCODER_B 10
+#define MOTOR4_ENCODER_A 52
+#define MOTOR4_ENCODER_B 53
 
 //MOTOR PINS
 #ifdef USE_L298_DRIVER
@@ -82,13 +82,13 @@ ROBOT ORIENTATION
   #define MOTOR2_IN_A 4
   #define MOTOR2_IN_B 3
 
-  //#define MOTOR3_PWM 22
- // #define MOTOR3_IN_A 23
- // #define MOTOR3_IN_B 0
+  #define MOTOR3_PWM 54
+  #define MOTOR3_IN_A 55
+  #define MOTOR3_IN_B 56
 
- // #define MOTOR4_PWM 4
-  //#define MOTOR4_IN_A 2
- // #define MOTOR4_IN_B 3
+  #define MOTOR4_PWM 57
+  #define MOTOR4_IN_A 58
+  #define MOTOR4_IN_B 59
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
   #define PWM_MIN -PWM_MAX

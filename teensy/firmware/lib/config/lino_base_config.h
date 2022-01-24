@@ -141,6 +141,6 @@ ROBOT ORIENTATION
 #endif
 */
 
-//#define STEERING_PIN 7
+#define STEERING_PIN 7
 
 #endif

@@ -18,6 +18,7 @@
 // #define USE_MPU6050_IMU
 // #define USE_MPU9150_IMU
 // #define USE_MPU9250_IMU
+// #define USE_ICM20948_IMU
 
 #define DEBUG 1
 

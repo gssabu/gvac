@@ -65,9 +65,9 @@
     #define GYRO_SCALE 1 / 131 // LSB/(deg/s)
     #define MAG_SCALE 0.15 // uT/LSB
     
-    MPU9250 accelerometer;
-    MPU9250 gyroscope;    
-    MPU9250 magnetometer;
+    ICM20948 accelerometer;
+    ICM20948 gyroscope;    
+    ICM20948 magnetometer;
 #endif
 #endif
 

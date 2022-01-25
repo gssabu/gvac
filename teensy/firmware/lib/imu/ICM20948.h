@@ -1,262 +1,361 @@
-/*
-A C++ interface to the ICM-20948
-*/
+/******************************************************************************
+ *
+ * This is a library for the 9-axis gyroscope, accelerometer and magnetometer ICM20948.
+ *
+ * You'll find several example sketches which should enable you to use the library. 
+ *
+ * You are free to use it, change it or build on it. In case you like it, it would
+ * be cool if you give it a star.
+ *
+ * If you find bugs, please inform me!
+ * 
+ * Written by Wolfgang (Wolle) Ewald
+ *
+ * Further information can be found on:
+ *
+ * https://wolles-elektronikkiste.de/icm-20948-9-achsensensor-teil-i (German)
+ * https://wolles-elektronikkiste.de/en/icm-20948-9-axis-sensor-part-i (English)
+ *
+ * 
+ ******************************************************************************/
 
-#ifndef _ICM_20948_H_
-#define _ICM_20948_H_
+#ifndef ICM20948_H_
+#define ICM20948_H_
 
-#include "util/ICM_20948_C.h" // The C backbone. ICM_20948_USE_DMP is defined in here.
-#include "util/AK09916_REGISTERS.h"
+#include "Arduino.h"
+#include <Wire.h>
 
-#include "Arduino.h" // Arduino support
-#include "Wire.h"
-#include "SPI.h"
+#define AK09916_ADDRESS 0x0C
 
-#define ICM_20948_ARD_UNUSED_PIN 0xFF
+/* Registers ICM20948 USER BANK 0*/
+#define ICM20948_WHO_AM_I            0x00
+#define ICM20948_USER_CTRL           0x03
+#define ICM20948_LP_CONFIG           0x05
+#define ICM20948_PWR_MGMT_1          0x06
+#define ICM20948_PWR_MGMT_2          0x07
+#define ICM20948_INT_PIN_CFG         0x0F
+#define ICM20948_INT_ENABLE          0x10
+#define ICM20948_INT_ENABLE_1        0x11
+#define ICM20948_INT_ENABLE_2        0x12
+#define ICM20948_INT_ENABLE_3        0x13
+#define ICM20948_I2C_MST_STATUS      0x17
+#define ICM20948_INT_STATUS          0x19
+#define ICM20948_INT_STATUS_1        0x1A
+#define ICM20948_INT_STATUS_2        0x1B
+#define ICM20948_INT_STATUS_3        0x1C
+#define ICM20948_DELAY_TIME_H        0x28
+#define ICM20948_DELAY_TIME_L        0x29
+#define ICM20948_ACCEL_OUT           0x2D // accel data registers begin
+#define ICM20948_GYRO_OUT            0x33 // gyro data registers begin
+#define ICM20948_TEMP_OUT            0x39 
+#define ICM20948_EXT_SLV_SENS_DATA_00  0x3B
+#define ICM20948_EXT_SLV_SENS_DATA_01  0x3C
+#define ICM20948_FIFO_EN_1           0x66
+#define ICM20948_FIFO_EN_2           0x67
+#define ICM20948_FIFO_RST            0x68
+#define ICM20948_FIFO_MODE           0x69
+#define ICM20948_FIFO_COUNT          0x70
+#define ICM20948_FIFO_R_W            0x72
+#define ICM20948_DATA_RDY_STATUS     0x74
+#define ICM20948_FIFO_CFG            0x76
 
-// Base
-class ICM_20948
-{
-private:
-  Stream *_debugSerial;     //The stream to send debug messages to if enabled
-  bool _printDebug = false; //Flag to print the serial commands we are sending to the Serial port for debug
+/* Registers ICM20948 USER BANK 1*/
+#define ICM20948_SELF_TEST_X_GYRO    0x02
+#define ICM20948_SELF_TEST_Y_GYRO    0x03
+#define ICM20948_SELF_TEST_Z_GYRO    0x04
+#define ICM20948_SELF_TEST_X_ACCEL   0x0E
+#define ICM20948_SELF_TEST_Y_ACCEL   0x0F
+#define ICM20948_SELF_TEST_Z_ACCEL   0x10
+#define ICM20948_XA_OFFS_H           0x14
+#define ICM20948_XA_OFFS_L           0x15
+#define ICM20948_YA_OFFS_H           0x17
+#define ICM20948_YA_OFFS_L           0x18
+#define ICM20948_ZA_OFFS_H           0x1A
+#define ICM20948_ZA_OFFS_L           0x1B
+#define ICM20948_TIMEBASE_CORR_PLL   0x28
 
-  const uint8_t MAX_MAGNETOMETER_STARTS = 10; // This replaces maxTries
+/* Registers ICM20948 USER BANK 2*/
+#define ICM20948_GYRO_SMPLRT_DIV     0x00
+#define ICM20948_GYRO_CONFIG_1       0x01
+#define ICM20948_GYRO_CONFIG_2       0x02
+#define ICM20948_XG_OFFS_USRH        0x03
+#define ICM20948_XG_OFFS_USRL        0x04
+#define ICM20948_YG_OFFS_USRH        0x05
+#define ICM20948_YG_OFFS_USRL        0x06
+#define ICM20948_ZG_OFFS_USRH        0x07
+#define ICM20948_ZG_OFFS_USRL        0x08
+#define ICM20948_ODR_ALIGN_EN        0x09
+#define ICM20948_ACCEL_SMPLRT_DIV_1  0x10
+#define ICM20948_ACCEL_SMPLRT_DIV_2  0x11
+#define ICM20948_ACCEL_INTEL_CTRL    0x12
+#define ICM20948_ACCEL_WOM_THR       0x13
+#define ICM20948_ACCEL_CONFIG        0x14
+#define ICM20948_ACCEL_CONFIG_2      0x15
+#define ICM20948_FSYNC_CONFIG        0x52
+#define ICM20948_TEMP_CONFIG         0x53
+#define ICM20948_MOD_CTRL_USR        0x54
 
-protected:
-  ICM_20948_Device_t _device;
+/* Registers ICM20948 USER BANK 3*/
+#define ICM20948_I2C_MST_ODR_CFG     0x00
+#define ICM20948_I2C_MST_CTRL        0x01
+#define ICM20948_I2C_MST_DELAY_CTRL  0x02
+#define ICM20948_I2C_SLV0_ADDR       0x03
+#define ICM20948_I2C_SLV0_REG        0x04
+#define ICM20948_I2C_SLV0_CTRL       0x05
+#define ICM20948_I2C_SLV0_DO         0x06
 
-  float getTempC(int16_t val);
-  float getGyrDPS(int16_t axis_val);
-  float getAccMG(int16_t axis_val);
-  float getMagUT(int16_t axis_val);
+/* Registers ICM20948 ALL BANKS */
+#define ICM20948_REG_BANK_SEL        0x7F
 
-public:
-  ICM_20948(); // Constructor
 
-// Enable debug messages using the chosen Serial port (Stream)
-// Boards like the RedBoard Turbo use SerialUSB (not Serial).
-// But other boards like the SAMD51 Thing Plus use Serial (not SerialUSB).
-// These lines let the code compile cleanly on as many SAMD boards as possible.
-#if defined(ARDUINO_ARCH_SAMD) // Is this a SAMD board?
-#if defined(USB_VID) // Is the USB Vendor ID defined?
-#if (USB_VID == 0x1B4F) // Is this a SparkFun board?
-#if !defined(ARDUINO_SAMD51_THING_PLUS) & !defined(ARDUINO_SAMD51_MICROMOD) // If it is not a SAMD51 Thing Plus or SAMD51 MicroMod
-  void enableDebugging(Stream &debugPort = SerialUSB); //Given a port to print to, enable debug messages.
-#else
-  void enableDebugging(Stream &debugPort = Serial); //Given a port to print to, enable debug messages.
-#endif
-#else
-  void enableDebugging(Stream &debugPort = Serial); //Given a port to print to, enable debug messages.
-#endif
-#else
-  void enableDebugging(Stream &debugPort = Serial); //Given a port to print to, enable debug messages.
-#endif
-#else
-  void enableDebugging(Stream &debugPort = Serial); //Given a port to print to, enable debug messages.
-#endif
+/* Registers AK09916 */
+#define AK09916_WIA_1    0x00 // Who I am, Company ID
+#define AK09916_WIA_2    0x01 // Who I am, Device ID
+#define AK09916_STATUS_1 0x10 
+#define AK09916_HXL      0x11
+#define AK09916_HXH      0x12
+#define AK09916_HYL      0x13
+#define AK09916_HYH      0x14
+#define AK09916_HZL      0x15
+#define AK09916_HZH      0x16
+#define AK09916_STATUS_2 0x18
+#define AK09916_CNTL_2   0x31
+#define AK09916_CNTL_3   0x32
 
-  void disableDebugging(void); //Turn off debug statements
+/* Register Bits */
+#define ICM20948_RESET              0x80
+#define ICM20948_I2C_MST_EN         0x20
+#define ICM20948_SLEEP              0x40
+#define ICM20948_LP_EN              0x20
+#define ICM20948_BYPASS_EN          0x02
+#define ICM20948_GYR_EN             0x07
+#define ICM20948_ACC_EN             0x38
+#define ICM20948_FIFO_EN            0x40
+#define ICM20948_INT1_ACTL          0x80
+#define ICM20948_INT_1_LATCH_EN     0x20
+#define ICM20948_ACTL_FSYNC         0x08
+#define ICM20948_INT_ANYRD_2CLEAR   0x10
+#define ICM20948_FSYNC_INT_MODE_EN  0x06
+#define AK09916_16_BIT              0x10
+#define AK09916_OVF                 0x08
+#define AK09916_READ                0x80
 
-  void debugPrintStatus(ICM_20948_Status_e stat);
+/* Others */
+#define AK09916_WHO_AM_I            0x4809
+#define ICM20948_ROOM_TEMP_OFFSET   0.0f
+#define ICM20948_T_SENSITIVITY      333.87f
+#define AK09916_MAG_LSB             0.1495f
 
-  // gfvalvo's flash string helper code: https://forum.arduino.cc/index.php?topic=533118.msg3634809#msg3634809
-  void debugPrint(const char *);
-  void debugPrint(const __FlashStringHelper *);
-  void debugPrintln(const char *);
-  void debugPrintln(const __FlashStringHelper *);
-  void doDebugPrint(char (*)(const char *), const char *, bool newLine = false);
 
-  void debugPrintf(int i);
-  void debugPrintf(float f);
+/* Enums */
 
-  ICM_20948_AGMT_t agmt;          // Acceleometer, Gyroscope, Magenetometer, and Temperature data
-  ICM_20948_AGMT_t getAGMT(void); // Updates the agmt field in the object and also returns a copy directly
 
-  float magX(void); // micro teslas
-  float magY(void); // micro teslas
-  float magZ(void); // micro teslas
+typedef enum ICM20948_CYCLE {
+    ICM20948_NO_CYCLE              = 0x00,
+    ICM20948_GYR_CYCLE             = 0x10, 
+    ICM20948_ACC_CYCLE             = 0x20,
+    ICM20948_ACC_GYR_CYCLE         = 0x30,
+    ICM20948_ACC_GYR_I2C_MST_CYCLE = 0x70
+} ICM20948_cycle;
 
-  float accX(void); // milli g's
-  float accY(void); // milli g's
-  float accZ(void); // milli g's
+typedef enum ICM20948_INT_PIN_POL {
+    ICM20948_ACT_HIGH, ICM20948_ACT_LOW
+} ICM20948_intPinPol;
 
-  float gyrX(void); // degrees per second
-  float gyrY(void); // degrees per second
-  float gyrZ(void); // degrees per second
+typedef enum ICM20948_INT_TYPE {
+    ICM20948_FSYNC_INT      = 0x01,
+    ICM20948_WOM_INT        = 0x02,
+    ICM20948_DMP_INT        = 0x04,
+    ICM20948_DATA_READY_INT = 0x08,
+    ICM20948_FIFO_OVF_INT   = 0x10,
+    ICM20948_FIFO_WM_INT    = 0x20
+} ICM20948_intType;
 
-  float temp(void); // degrees celsius
+typedef enum ICM20948_FIFO_TYPE {
+    ICM20948_FIFO_ACC        = 0x10,
+    ICM20948_FIFO_GYR        = 0x0E,
+    ICM20948_FIFO_ACC_GYR    = 0x1E
+} ICM20948_fifoType;
 
-  ICM_20948_Status_e status;                                              // Status from latest operation
-  const char *statusString(ICM_20948_Status_e stat = ICM_20948_Stat_NUM); // Returns a human-readable status message. Defaults to status member, but prints string for supplied status if supplied
+typedef enum ICM20948_FIFO_MODE_CHOICE {
+    ICM20948_CONTINUOUS, ICM20948_STOP_WHEN_FULL
+} ICM20948_fifoMode;
 
-  // Device Level
-  ICM_20948_Status_e setBank(uint8_t bank);                                // Sets the bank
-  ICM_20948_Status_e swReset(void);                                        // Performs a SW reset
-  ICM_20948_Status_e sleep(bool on = false);                               // Set sleep mode for the chip
-  ICM_20948_Status_e lowPower(bool on = true);                             // Set low power mode for the chip
-  ICM_20948_Status_e setClockSource(ICM_20948_PWR_MGMT_1_CLKSEL_e source); // Choose clock source
-  ICM_20948_Status_e checkID(void);                                        // Return 'ICM_20948_Stat_Ok' if whoami matches ICM_20948_WHOAMI
+typedef enum ICM20948_GYRO_RANGE {
+    ICM20948_GYRO_RANGE_250, ICM20948_GYRO_RANGE_500, ICM20948_GYRO_RANGE_1000, ICM20948_GYRO_RANGE_2000
+} ICM20948_gyroRange;
 
-  bool dataReady(void);    // Returns 'true' if data is ready
-  uint8_t getWhoAmI(void); // Return whoami in out prarmeter
-  bool isConnected(void);  // Returns true if communications with the device are sucessful
+typedef enum ICM20948_DLPF {
+    ICM20948_DLPF_0, ICM20948_DLPF_1, ICM20948_DLPF_2, ICM20948_DLPF_3, ICM20948_DLPF_4, ICM20948_DLPF_5, 
+    ICM20948_DLPF_6, ICM20948_DLPF_7, ICM20948_DLPF_OFF
+} ICM20948_dlpf;
 
-  // Internal Sensor Options
-  ICM_20948_Status_e setSampleMode(uint8_t sensor_id_bm, uint8_t lp_config_cycle_mode); // Use to set accel, gyro, and I2C master into cycled or continuous modes
-  ICM_20948_Status_e setFullScale(uint8_t sensor_id_bm, ICM_20948_fss_t fss);
-  ICM_20948_Status_e setDLPFcfg(uint8_t sensor_id_bm, ICM_20948_dlpcfg_t cfg);
-  ICM_20948_Status_e enableDLPF(uint8_t sensor_id_bm, bool enable);
-  ICM_20948_Status_e setSampleRate(uint8_t sensor_id_bm, ICM_20948_smplrt_t smplrt);
+typedef enum ICM20948_GYRO_AVG_LOW_PWR {
+    ICM20948_GYR_AVG_1, ICM20948_GYR_AVG_2, ICM20948_GYR_AVG_4, ICM20948_GYR_AVG_8, ICM20948_GYR_AVG_16, 
+    ICM20948_GYR_AVG_32, ICM20948_GYR_AVG_64, ICM20948_GYR_AVG_128
+} ICM20948_gyroAvgLowPower;
 
-  // Interrupts on INT and FSYNC Pins
-  ICM_20948_Status_e clearInterrupts(void);
+typedef enum ICM20948_ACC_RANGE {
+    ICM20948_ACC_RANGE_2G, ICM20948_ACC_RANGE_4G, ICM20948_ACC_RANGE_8G, ICM20948_ACC_RANGE_16G
+} ICM20948_accRange;
 
-  ICM_20948_Status_e cfgIntActiveLow(bool active_low);
-  ICM_20948_Status_e cfgIntOpenDrain(bool open_drain);
-  ICM_20948_Status_e cfgIntLatch(bool latching);         // If not latching then the interrupt is a 50 us pulse
-  ICM_20948_Status_e cfgIntAnyReadToClear(bool enabled); // If enabled, *ANY* read will clear the INT_STATUS register. So if you have multiple interrupt sources enabled be sure to read INT_STATUS first
-  ICM_20948_Status_e cfgFsyncActiveLow(bool active_low);
-  ICM_20948_Status_e cfgFsyncIntMode(bool interrupt_mode); // Can use FSYNC as an interrupt input that sets the I2C Master Status register's PASS_THROUGH bit
+typedef enum ICM20948_ACC_AVG_LOW_PWR {
+    ICM20948_ACC_AVG_4, ICM20948_ACC_AVG_8, ICM20948_ACC_AVG_16, ICM20948_ACC_AVG_32
+} ICM20948_accAvgLowPower;
 
-  ICM_20948_Status_e intEnableI2C(bool enable);
-  ICM_20948_Status_e intEnableDMP(bool enable);
-  ICM_20948_Status_e intEnablePLL(bool enable);
-  ICM_20948_Status_e intEnableWOM(bool enable);
-  ICM_20948_Status_e intEnableWOF(bool enable);
-  ICM_20948_Status_e intEnableRawDataReady(bool enable);
-  ICM_20948_Status_e intEnableOverflowFIFO(uint8_t bm_enable);
-  ICM_20948_Status_e intEnableWatermarkFIFO(uint8_t bm_enable);
+typedef enum ICM20948_WOM_COMP {
+    ICM20948_WOM_COMP_DISABLE, ICM20948_WOM_COMP_ENABLE
+} ICM20948_womCompEn;
 
-  ICM_20948_Status_e WOMThreshold(uint8_t threshold);
+typedef enum AK09916_OP_MODE {
+    AK09916_PWR_DOWN           = 0x00,
+    AK09916_TRIGGER_MODE       = 0x01,
+    AK09916_CONT_MODE_10HZ     = 0x02,
+    AK09916_CONT_MODE_20HZ     = 0x04,
+    AK09916_CONT_MODE_50HZ     = 0x06,
+    AK09916_CONT_MODE_100HZ    = 0x08
+} AK09916_opMode;
 
-  // Interface Options
-  ICM_20948_Status_e i2cMasterPassthrough(bool passthrough = true);
-  ICM_20948_Status_e i2cMasterEnable(bool enable = true);
-  ICM_20948_Status_e i2cMasterReset();
+typedef enum ICM20948_ORIENTATION {
+  ICM20948_FLAT, ICM20948_FLAT_1, ICM20948_XY, ICM20948_XY_1, ICM20948_YX, ICM20948_YX_1
+} ICM20948_orientation;
 
-  //Used for configuring peripherals 0-3
-  ICM_20948_Status_e i2cControllerConfigurePeripheral(uint8_t peripheral, uint8_t addr, uint8_t reg, uint8_t len, bool Rw = true, bool enable = true, bool data_only = false, bool grp = false, bool swap = false, uint8_t dataOut = 0);
-  ICM_20948_Status_e i2cControllerPeriph4Transaction(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len, bool Rw, bool send_reg_addr = true);
-
-  //Provided for backward-compatibility only. Please update to i2cControllerConfigurePeripheral and i2cControllerPeriph4Transaction.
-  //https://www.oshwa.org/2020/06/29/a-resolution-to-redefine-spi-pin-names/
-  ICM_20948_Status_e i2cMasterConfigureSlave(uint8_t peripheral, uint8_t addr, uint8_t reg, uint8_t len, bool Rw = true, bool enable = true, bool data_only = false, bool grp = false, bool swap = false);
-  ICM_20948_Status_e i2cMasterSLV4Transaction(uint8_t addr, uint8_t reg, uint8_t *data, uint8_t len, bool Rw, bool send_reg_addr = true);
-
-  //Used for configuring the Magnetometer
-  ICM_20948_Status_e i2cMasterSingleW(uint8_t addr, uint8_t reg, uint8_t data);
-  uint8_t i2cMasterSingleR(uint8_t addr, uint8_t reg);
-
-  // Default Setup
-  ICM_20948_Status_e startupDefault(bool minimal = false); // If minimal is true, several startup steps are skipped. If ICM_20948_USE_DMP is defined, .begin will call startupDefault with minimal set to true.
-
-  // direct read/write
-  ICM_20948_Status_e read(uint8_t reg, uint8_t *pdata, uint32_t len);
-  ICM_20948_Status_e write(uint8_t reg, uint8_t *pdata, uint32_t len);
-
-  //Mag specific
-  ICM_20948_Status_e startupMagnetometer(bool minimal = false); // If minimal is true, several startup steps are skipped. The mag then needs to be set up manually for the DMP.
-  ICM_20948_Status_e magWhoIAm(void);
-  uint8_t readMag(AK09916_Reg_Addr_e reg);
-  ICM_20948_Status_e writeMag(AK09916_Reg_Addr_e reg, uint8_t *pdata);
-  ICM_20948_Status_e resetMag();
-
-  //FIFO
-  ICM_20948_Status_e enableFIFO(bool enable = true);
-  ICM_20948_Status_e resetFIFO(void);
-  ICM_20948_Status_e setFIFOmode(bool snapshot = false); // Default to Stream (non-Snapshot) mode
-  ICM_20948_Status_e getFIFOcount(uint16_t *count);
-  ICM_20948_Status_e readFIFO(uint8_t *data, uint8_t len = 1);
-
-  //DMP
-
-  // Done:
-  //  Configure DMP start address through PRGM_STRT_ADDRH/PRGM_STRT_ADDRL
-  //  Load Firmware
-  //  Configure Accel scaling to DMP
-  //  Configure Compass mount matrix and scale to DMP
-  //  Reset FIFO
-  //  Reset DMP
-  //  Enable DMP interrupt
-  //  Configuring DMP to output data to FIFO: set DATA_OUT_CTL1, DATA_OUT_CTL2, DATA_INTR_CTL and MOTION_EVENT_CTL
-  //  Configuring DMP to output data at multiple ODRs
-  //  Configure DATA_RDY_STATUS
-  //  Configuring Accel calibration
-  //  Configuring Compass calibration
-  //  Configuring Gyro gain
-  //  Configuring Accel gain
-  //  Configure I2C_SLV0 and I2C_SLV1 to: request mag data from the hidden reserved AK09916 registers; trigger Single Measurements
-  //  Configure I2C Master ODR (default to 68.75Hz)
-
-  // To Do:
-  //  Additional FIFO output control: FIFO_WATERMARK, BM_BATCH_MASK, BM_BATCH_CNTR, BM_BATCH_THLD
-  //  Configuring DMP features: PED_STD_STEPCTR, PED_STD_TIMECTR
-  //  Enabling Activity Recognition (BAC) feature
-  //  Enabling Significant Motion Detect (SMD) feature
-  //  Enabling Tilt Detector feature
-  //  Enabling Pick Up Gesture feature
-  //  Enabling Fsync detection feature
-  //  Biases: add save and load methods
-
-  ICM_20948_Status_e enableDMP(bool enable = true);
-  ICM_20948_Status_e resetDMP(void);
-  ICM_20948_Status_e loadDMPFirmware(void);
-  ICM_20948_Status_e setDMPstartAddress(unsigned short address = DMP_START_ADDRESS);
-  ICM_20948_Status_e enableDMPSensor(enum inv_icm20948_sensor sensor, bool enable = true);
-  ICM_20948_Status_e enableDMPSensorInt(enum inv_icm20948_sensor sensor, bool enable = true);
-  ICM_20948_Status_e writeDMPmems(unsigned short reg, unsigned int length, const unsigned char *data);
-  ICM_20948_Status_e readDMPmems(unsigned short reg, unsigned int length, unsigned char *data);
-  ICM_20948_Status_e setDMPODRrate(enum DMP_ODR_Registers odr_reg, int interval);
-  ICM_20948_Status_e readDMPdataFromFIFO(icm_20948_DMP_data_t *data);
-  ICM_20948_Status_e setGyroSF(unsigned char div, int gyro_level);
-  ICM_20948_Status_e initializeDMP(void) __attribute__((weak)); // Combine all of the DMP start-up code in one place. Can be overwritten if required
+struct xyzFloat {
+    float x;
+    float y;
+    float z;
 };
 
-// I2C
 
-// Forward declarations of TwoWire and Wire for board/variant combinations that don't have a default 'SPI'
-//class TwoWire; // Commented by PaulZC 21/2/8 - this was causing compilation to fail on the Arduino NANO 33 BLE
-//extern TwoWire Wire; // Commented by PaulZC 21/2/8 - this was causing compilation to fail on the Arduino NANO 33 BLE
-
-class ICM_20948_I2C : public ICM_20948
+class ICM20948
 {
+public: 
+    
+    /* Constructors */
+    
+    ICM20948(int addr);
+    ICM20948();
+    ICM20948(TwoWire *w, int addr);
+    ICM20948(TwoWire *w);           
+    
+   
+   /* Basic settings */
+
+    bool init();
+    void autoOffsets();
+    void setAccOffsets(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax);
+    void setGyrOffsets(float xOffset, float yOffset, float zOffset);    
+    uint8_t whoAmI();
+    void enableAcc(bool enAcc);
+    void setAccRange(ICM20948_accRange accRange);
+    void setAccDLPF(ICM20948_dlpf dlpf); 
+    void setAccSampleRateDivider(uint16_t accSplRateDiv);
+    void enableGyr(bool enGyr);
+    void setGyrRange(ICM20948_gyroRange gyroRange);
+    void setGyrDLPF(ICM20948_dlpf dlpf); 
+    void setGyrSampleRateDivider(uint8_t gyrSplRateDiv);
+    void setTempDLPF(ICM20948_dlpf dlpf);
+    void setI2CMstSampleRate(uint8_t rateExp);
+        
+            
+    /* x,y,z results */
+    
+    void readSensor(); 
+    xyzFloat getAccRawValues();
+    xyzFloat getCorrectedAccRawValues();
+    xyzFloat getGValues();
+    xyzFloat getAccRawValuesFromFifo();
+    xyzFloat getCorrectedAccRawValuesFromFifo();
+    xyzFloat getGValuesFromFifo();
+    float getResultantG(xyzFloat gVal); 
+    float getTemperature();
+    xyzFloat getGyrRawValues();
+    xyzFloat getCorrectedGyrRawValues();
+    xyzFloat getGyrValues(); 
+    xyzFloat getGyrValuesFromFifo();
+    xyzFloat getMagValues();
+    
+        
+    /* Angles and Orientation */ 
+    
+    xyzFloat getAngles();
+    ICM20948_orientation getOrientation();
+    String getOrientationAsString();
+    float getPitch();
+    float getRoll();
+    
+    
+    /* Power, Sleep, Standby */ 
+    
+    void enableCycle(ICM20948_cycle cycle);
+    void enableLowPower(bool enLP);
+    void setGyrAverageInCycleMode(ICM20948_gyroAvgLowPower avg);
+    void setAccAverageInCycleMode(ICM20948_accAvgLowPower avg);
+    void sleep(bool sleep);
+    
+   
+    /* Interrupts */
+    
+    void setIntPinPolarity(ICM20948_intPinPol pol);
+    void enableIntLatch(bool latch);
+    void enableClearIntByAnyRead(bool clearByAnyRead);
+    void setFSyncIntPolarity(ICM20948_intPinPol pol);
+    void enableInterrupt(ICM20948_intType intType);
+    void disableInterrupt(ICM20948_intType intType);
+    uint8_t readAndClearInterrupts();
+    bool checkInterrupt(uint8_t source, ICM20948_intType type);
+    void setWakeOnMotionThreshold(uint8_t womThresh, ICM20948_womCompEn womCompEn);
+    
+    
+    /* FIFO */
+    
+    void enableFifo(bool fifo);
+    void setFifoMode(ICM20948_fifoMode mode);
+    void startFifo(ICM20948_fifoType fifo);
+    void stopFifo();
+    void resetFifo();
+    int16_t getFifoCount();
+    int16_t getNumberOfFifoDataSets();
+    void findFifoBegin();
+    
+    
+    /* Magnetometer */
+    
+    bool initMagnetometer();
+    int16_t whoAmIMag();
+    void setMagOpMode(AK09916_opMode opMode);
+    void resetMag();
+    
 private:
-protected:
-public:
-  TwoWire *_i2c;
-  uint8_t _addr;
-  uint8_t _ad0;
-  bool _ad0val;
-  ICM_20948_Serif_t _serif;
+    TwoWire *_wire;
+    int i2cAddress;
+    uint8_t currentBank;
+    uint8_t buffer[20]; 
+    xyzFloat accOffsetVal;
+    xyzFloat accCorrFactor;
+    xyzFloat gyrOffsetVal;
+    uint8_t accRangeFactor;
+    uint8_t gyrRangeFactor;
+    uint8_t regVal;   // intermediate storage of register values
+    ICM20948_fifoType fifoType;
+    
+    void setClockToAutoSelect();
+    xyzFloat correctAccRawValues(xyzFloat accRawVal);
+    xyzFloat correctGyrRawValues(xyzFloat gyrRawVal);
+    void switchBank(uint8_t newBank);
+    uint8_t writeRegister8(uint8_t bank, uint8_t reg, uint8_t val);
+    uint8_t writeRegister16(uint8_t bank, uint8_t reg, int16_t val);
+    uint8_t readRegister8(uint8_t bank, uint8_t reg);
+    int16_t readRegister16(uint8_t bank, uint8_t reg);
+    void readAllData(uint8_t* data);
+    xyzFloat readICM20948xyzValFromFifo();
+    void writeAK09916Register8(uint8_t reg, uint8_t val);
+    uint8_t readAK09916Register8(uint8_t reg);
+    int16_t readAK09916Register16(uint8_t reg);
+    uint8_t reset_ICM20948();
+    void enableI2CMaster();
+    void enableMagDataRead(uint8_t reg, uint8_t bytes);
 
-  ICM_20948_I2C(); // Constructor
-
-  virtual ICM_20948_Status_e begin(TwoWire &wirePort = Wire, bool ad0val = true, uint8_t ad0pin = ICM_20948_ARD_UNUSED_PIN);
 };
 
-// SPI
-#define ICM_20948_SPI_DEFAULT_FREQ 4000000
-#define ICM_20948_SPI_DEFAULT_ORDER MSBFIRST
-#define ICM_20948_SPI_DEFAULT_MODE SPI_MODE0
-
-// Forward declarations of SPIClass and SPI for board/variant combinations that don't have a default 'SPI'
-//class SPIClass; // Commented by PaulZC 21/2/8 - this was causing compilation to fail on the Arduino NANO 33 BLE
-//extern SPIClass SPI; // Commented by PaulZC 21/2/8 - this was causing compilation to fail on the Arduino NANO 33 BLE
-
-class ICM_20948_SPI : public ICM_20948
-{
-private:
-protected:
-public:
-  SPIClass *_spi;
-  SPISettings _spisettings;
-  uint8_t _cs;
-  ICM_20948_Serif_t _serif;
-
-  ICM_20948_SPI(); // Constructor
-
-  ICM_20948_Status_e begin(uint8_t csPin, SPIClass &spiPort = SPI, uint32_t SPIFreq = ICM_20948_SPI_DEFAULT_FREQ);
-};
-
-#endif /* _ICM_20948_H_ */
+#endif

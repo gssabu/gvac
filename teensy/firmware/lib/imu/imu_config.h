@@ -58,17 +58,6 @@
     MPU9250 magnetometer;
 #endif
 
-#ifdef USE_ICM20948_IMU
-    #include "ICM20948.h"
-
-    #define ACCEL_SCALE 1 / 16384 // LSB/g
-    #define GYRO_SCALE 1 / 131 // LSB/(deg/s)
-    #define MAG_SCALE 0.15 // uT/LSB
-    
-    ICM20948 accelerometer;
-    ICM20948 gyroscope;    
-    ICM20948 magnetometer;
-#endif
 #endif
 
 //ADXL345 https://www.sparkfun.com/datasheets/Sensors/Accelerometer/ADXL345.pdf

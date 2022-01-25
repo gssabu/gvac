@@ -13,19 +13,19 @@ bool initIMU()
     bool ret;
     
     accelerometer.initialize();
-    ret = accelerometer.testConnection();
-    if(!ret)
-        return false;
+    //#ret = accelerometer.testConnection();
+   //if(!ret)
+    //    return false;
 
     gyroscope.initialize();
-    ret = gyroscope.testConnection();
-    if(!ret)
-        return false;
+    //ret = gyroscope.testConnection();
+    //if(!ret)
+    //    return false;
   
     magnetometer.initialize();
-    ret = magnetometer.testConnection();
+    /*ret = magnetometer.testConnection();
     if(!ret)
-        return false;
+        return false;*/
 
     return true;
 }

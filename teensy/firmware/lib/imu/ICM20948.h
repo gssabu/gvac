@@ -1,361 +1,676 @@
-/******************************************************************************
+/***************************************************************************//**
+ * @file ICM20948.h
+ *******************************************************************************
+ * @section License
+ * <b>(C) Copyright 2017 Silicon Labs, http://www.silabs.com</b>
+ *******************************************************************************
  *
- * This is a library for the 9-axis gyroscope, accelerometer and magnetometer ICM20948.
+ * SPDX-License-Identifier: Apache-2.0
  *
- * You'll find several example sketches which should enable you to use the library. 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * You are free to use it, change it or build on it. In case you like it, it would
- * be cool if you give it a star.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * If you find bugs, please inform me!
- * 
- * Written by Wolfgang (Wolle) Ewald
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
- * Further information can be found on:
- *
- * https://wolles-elektronikkiste.de/icm-20948-9-achsensensor-teil-i (German)
- * https://wolles-elektronikkiste.de/en/icm-20948-9-axis-sensor-part-i (English)
- *
- * 
  ******************************************************************************/
 
-#ifndef ICM20948_H_
-#define ICM20948_H_
+#ifndef ICM20948_H
+#define ICM20948_H
 
-#include "Arduino.h"
-#include <Wire.h>
+#include <SPI.h>
 
-#define AK09916_ADDRESS 0x0C
+/** @cond DO_NOT_INCLUDE_WITH_DOXYGEN */
 
-/* Registers ICM20948 USER BANK 0*/
-#define ICM20948_WHO_AM_I            0x00
-#define ICM20948_USER_CTRL           0x03
-#define ICM20948_LP_CONFIG           0x05
-#define ICM20948_PWR_MGMT_1          0x06
-#define ICM20948_PWR_MGMT_2          0x07
-#define ICM20948_INT_PIN_CFG         0x0F
-#define ICM20948_INT_ENABLE          0x10
-#define ICM20948_INT_ENABLE_1        0x11
-#define ICM20948_INT_ENABLE_2        0x12
-#define ICM20948_INT_ENABLE_3        0x13
-#define ICM20948_I2C_MST_STATUS      0x17
-#define ICM20948_INT_STATUS          0x19
-#define ICM20948_INT_STATUS_1        0x1A
-#define ICM20948_INT_STATUS_2        0x1B
-#define ICM20948_INT_STATUS_3        0x1C
-#define ICM20948_DELAY_TIME_H        0x28
-#define ICM20948_DELAY_TIME_L        0x29
-#define ICM20948_ACCEL_OUT           0x2D // accel data registers begin
-#define ICM20948_GYRO_OUT            0x33 // gyro data registers begin
-#define ICM20948_TEMP_OUT            0x39 
-#define ICM20948_EXT_SLV_SENS_DATA_00  0x3B
-#define ICM20948_EXT_SLV_SENS_DATA_01  0x3C
-#define ICM20948_FIFO_EN_1           0x66
-#define ICM20948_FIFO_EN_2           0x67
-#define ICM20948_FIFO_RST            0x68
-#define ICM20948_FIFO_MODE           0x69
-#define ICM20948_FIFO_COUNT          0x70
-#define ICM20948_FIFO_R_W            0x72
-#define ICM20948_DATA_RDY_STATUS     0x74
-#define ICM20948_FIFO_CFG            0x76
+/**************************************************************************//**
+* @name Error Codes
+* @{
+******************************************************************************/
+#define OK                                  0x0000                      /**< No errors          */
+#define ERROR                               0x0001                      /**< Error              */
+/**@}*/
 
-/* Registers ICM20948 USER BANK 1*/
-#define ICM20948_SELF_TEST_X_GYRO    0x02
-#define ICM20948_SELF_TEST_Y_GYRO    0x03
-#define ICM20948_SELF_TEST_Z_GYRO    0x04
-#define ICM20948_SELF_TEST_X_ACCEL   0x0E
-#define ICM20948_SELF_TEST_Y_ACCEL   0x0F
-#define ICM20948_SELF_TEST_Z_ACCEL   0x10
-#define ICM20948_XA_OFFS_H           0x14
-#define ICM20948_XA_OFFS_L           0x15
-#define ICM20948_YA_OFFS_H           0x17
-#define ICM20948_YA_OFFS_L           0x18
-#define ICM20948_ZA_OFFS_H           0x1A
-#define ICM20948_ZA_OFFS_L           0x1B
-#define ICM20948_TIMEBASE_CORR_PLL   0x28
+/**************************************************************************//**
+* @name ICM20948 register banks
+* @{
+******************************************************************************/
+#define ICM20948_BANK_0                     (0 << 7)                    /**< Register bank 0    */
+#define ICM20948_BANK_1                     (1 << 7)                    /**< Register bank 1    */
+#define ICM20948_BANK_2                     (2 << 7)                    /**< Register bank 2    */
+#define ICM20948_BANK_3                     (3 << 7)                    /**< Register bank 3    */
+/**@}*/
 
-/* Registers ICM20948 USER BANK 2*/
-#define ICM20948_GYRO_SMPLRT_DIV     0x00
-#define ICM20948_GYRO_CONFIG_1       0x01
-#define ICM20948_GYRO_CONFIG_2       0x02
-#define ICM20948_XG_OFFS_USRH        0x03
-#define ICM20948_XG_OFFS_USRL        0x04
-#define ICM20948_YG_OFFS_USRH        0x05
-#define ICM20948_YG_OFFS_USRL        0x06
-#define ICM20948_ZG_OFFS_USRH        0x07
-#define ICM20948_ZG_OFFS_USRL        0x08
-#define ICM20948_ODR_ALIGN_EN        0x09
-#define ICM20948_ACCEL_SMPLRT_DIV_1  0x10
-#define ICM20948_ACCEL_SMPLRT_DIV_2  0x11
-#define ICM20948_ACCEL_INTEL_CTRL    0x12
-#define ICM20948_ACCEL_WOM_THR       0x13
-#define ICM20948_ACCEL_CONFIG        0x14
-#define ICM20948_ACCEL_CONFIG_2      0x15
-#define ICM20948_FSYNC_CONFIG        0x52
-#define ICM20948_TEMP_CONFIG         0x53
-#define ICM20948_MOD_CTRL_USR        0x54
+/**************************************************************************//**
+* @name Register and associated bit definitions
+* @{
+******************************************************************************/
+/***********************/
+/* Bank 0 register map */
+/***********************/
+#define ICM20948_REG_WHO_AM_I               (ICM20948_BANK_0 | 0x00)    /**< Device ID register                                     */
 
-/* Registers ICM20948 USER BANK 3*/
-#define ICM20948_I2C_MST_ODR_CFG     0x00
-#define ICM20948_I2C_MST_CTRL        0x01
-#define ICM20948_I2C_MST_DELAY_CTRL  0x02
-#define ICM20948_I2C_SLV0_ADDR       0x03
-#define ICM20948_I2C_SLV0_REG        0x04
-#define ICM20948_I2C_SLV0_CTRL       0x05
-#define ICM20948_I2C_SLV0_DO         0x06
+#define ICM20948_REG_USER_CTRL              (ICM20948_BANK_0 | 0x03)    /**< User control register                                  */
+#define ICM20948_BIT_DMP_EN                 0x80                        /**< DMP enable bit                                         */
+#define ICM20948_BIT_FIFO_EN                0x40                        /**< FIFO enable bit                                        */
+#define ICM20948_BIT_I2C_MST_EN             0x20                        /**< I2C master I/F enable bit                              */
+#define ICM20948_BIT_I2C_IF_DIS             0x10                        /**< Disable I2C, enable SPI bit                            */
+#define ICM20948_BIT_DMP_RST                0x08                        /**< DMP module reset bit                                   */
+#define ICM20948_BIT_DIAMOND_DMP_RST        0x04                        /**< SRAM module reset bit                                  */
 
-/* Registers ICM20948 ALL BANKS */
-#define ICM20948_REG_BANK_SEL        0x7F
+#define ICM20948_REG_LP_CONFIG              (ICM20948_BANK_0 | 0x05)    /**< Low Power mode config register                         */
+#define ICM20948_BIT_I2C_MST_CYCLE          0x40                        /**< I2C master cycle mode enable                           */
+#define ICM20948_BIT_ACCEL_CYCLE            0x20                        /**< Accelerometer cycle mode enable                        */
+#define ICM20948_BIT_GYRO_CYCLE             0x10                        /**< Gyroscope cycle mode enable                            */
 
+#define ICM20948_REG_PWR_MGMT_1             (ICM20948_BANK_0 | 0x06)    /**< Power Management 1 register                            */
+#define ICM20948_BIT_H_RESET                0x80                        /**< Device reset bit                                       */
+#define ICM20948_BIT_SLEEP                  0x40                        /**< Sleep mode enable bit                                  */
+#define ICM20948_BIT_LP_EN                  0x20                        /**< Low Power feature enable bit                           */
+#define ICM20948_BIT_TEMP_DIS               0x08                        /**< Temperature sensor disable bit                         */
+#define ICM20948_BIT_CLK_PLL                0x01                        /**< Auto clock source selection setting                    */
 
-/* Registers AK09916 */
-#define AK09916_WIA_1    0x00 // Who I am, Company ID
-#define AK09916_WIA_2    0x01 // Who I am, Device ID
-#define AK09916_STATUS_1 0x10 
-#define AK09916_HXL      0x11
-#define AK09916_HXH      0x12
-#define AK09916_HYL      0x13
-#define AK09916_HYH      0x14
-#define AK09916_HZL      0x15
-#define AK09916_HZH      0x16
-#define AK09916_STATUS_2 0x18
-#define AK09916_CNTL_2   0x31
-#define AK09916_CNTL_3   0x32
+#define ICM20948_REG_PWR_MGMT_2             (ICM20948_BANK_0 | 0x07)    /**< Power Management 2 register                            */
+#define ICM20948_BIT_PWR_ACCEL_STBY         0x38                        /**< Disable accelerometer                                  */
+#define ICM20948_BIT_PWR_GYRO_STBY          0x07                        /**< Disable gyroscope                                      */
+#define ICM20948_BIT_PWR_ALL_OFF            0x7F                        /**< Disable both accel and gyro                            */
 
-/* Register Bits */
-#define ICM20948_RESET              0x80
-#define ICM20948_I2C_MST_EN         0x20
-#define ICM20948_SLEEP              0x40
-#define ICM20948_LP_EN              0x20
-#define ICM20948_BYPASS_EN          0x02
-#define ICM20948_GYR_EN             0x07
-#define ICM20948_ACC_EN             0x38
-#define ICM20948_FIFO_EN            0x40
-#define ICM20948_INT1_ACTL          0x80
-#define ICM20948_INT_1_LATCH_EN     0x20
-#define ICM20948_ACTL_FSYNC         0x08
-#define ICM20948_INT_ANYRD_2CLEAR   0x10
-#define ICM20948_FSYNC_INT_MODE_EN  0x06
-#define AK09916_16_BIT              0x10
-#define AK09916_OVF                 0x08
-#define AK09916_READ                0x80
+#define ICM20948_REG_INT_PIN_CFG            (ICM20948_BANK_0 | 0x0F)    /**< Interrupt Pin Configuration register                   */
+#define ICM20948_BIT_INT_ACTL               0x80                        /**< Active low setting bit                                 */
+#define ICM20948_BIT_INT_OPEN               0x40                        /**< Open collector configuration bit                       */
+#define ICM20948_BIT_INT_LATCH_EN           0x20                        /**< Latch enable bit                                       */
 
-/* Others */
-#define AK09916_WHO_AM_I            0x4809
-#define ICM20948_ROOM_TEMP_OFFSET   0.0f
-#define ICM20948_T_SENSITIVITY      333.87f
-#define AK09916_MAG_LSB             0.1495f
+#define ICM20948_REG_INT_ENABLE             (ICM20948_BANK_0 | 0x10)    /**< Interrupt Enable register                              */
+#define ICM20948_BIT_WOM_INT_EN             0x08                        /**< Wake-up On Motion enable bit                           */
 
+#define ICM20948_REG_INT_ENABLE_1           (ICM20948_BANK_0 | 0x11)    /**< Interrupt Enable 1 register                            */
+#define ICM20948_BIT_RAW_DATA_0_RDY_EN      0x01                        /**< Raw data ready interrupt enable bit                    */
 
-/* Enums */
+#define ICM20948_REG_INT_ENABLE_2           (ICM20948_BANK_0 | 0x12)    /**< Interrupt Enable 2 register                            */
+#define ICM20948_BIT_FIFO_OVERFLOW_EN_0     0x01                        /**< FIFO overflow interrupt enable bit                     */
 
+#define ICM20948_REG_INT_ENABLE_3           (ICM20948_BANK_0 | 0x13)    /**< Interrupt Enable 2 register                            */
 
-typedef enum ICM20948_CYCLE {
-    ICM20948_NO_CYCLE              = 0x00,
-    ICM20948_GYR_CYCLE             = 0x10, 
-    ICM20948_ACC_CYCLE             = 0x20,
-    ICM20948_ACC_GYR_CYCLE         = 0x30,
-    ICM20948_ACC_GYR_I2C_MST_CYCLE = 0x70
-} ICM20948_cycle;
+#define ICM20948_REG_INT_STATUS             (ICM20948_BANK_0 | 0x19)    /**< Interrupt Status register                              */
+#define ICM20948_BIT_WOM_INT                0x08                        /**< Wake-up on motion interrupt bit                        */
+#define ICM20948_BIT_PLL_RDY                0x04                        /**< PLL ready interrupt bit                                */
 
-typedef enum ICM20948_INT_PIN_POL {
-    ICM20948_ACT_HIGH, ICM20948_ACT_LOW
-} ICM20948_intPinPol;
+#define ICM20948_REG_INT_STATUS_1           (ICM20948_BANK_0 | 0x1A)    /**< Interrupt Status 1 register                            */
+#define ICM20948_BIT_RAW_DATA_0_RDY_INT     0x01                        /**< Raw data ready interrupt bit                           */
 
-typedef enum ICM20948_INT_TYPE {
-    ICM20948_FSYNC_INT      = 0x01,
-    ICM20948_WOM_INT        = 0x02,
-    ICM20948_DMP_INT        = 0x04,
-    ICM20948_DATA_READY_INT = 0x08,
-    ICM20948_FIFO_OVF_INT   = 0x10,
-    ICM20948_FIFO_WM_INT    = 0x20
-} ICM20948_intType;
+#define ICM20948_REG_INT_STATUS_2           (ICM20948_BANK_0 | 0x1B)    /**< Interrupt Status 2 register                            */
 
-typedef enum ICM20948_FIFO_TYPE {
-    ICM20948_FIFO_ACC        = 0x10,
-    ICM20948_FIFO_GYR        = 0x0E,
-    ICM20948_FIFO_ACC_GYR    = 0x1E
-} ICM20948_fifoType;
+#define ICM20948_REG_ACCEL_XOUT_H_SH        (ICM20948_BANK_0 | 0x2D)    /**< Accelerometer X-axis data high byte                    */
+#define ICM20948_REG_ACCEL_XOUT_L_SH        (ICM20948_BANK_0 | 0x2E)    /**< Accelerometer X-axis data low byte                     */
+#define ICM20948_REG_ACCEL_YOUT_H_SH        (ICM20948_BANK_0 | 0x2F)    /**< Accelerometer Y-axis data high byte                    */
+#define ICM20948_REG_ACCEL_YOUT_L_SH        (ICM20948_BANK_0 | 0x30)    /**< Accelerometer Y-axis data low byte                     */
+#define ICM20948_REG_ACCEL_ZOUT_H_SH        (ICM20948_BANK_0 | 0x31)    /**< Accelerometer Z-axis data high byte                    */
+#define ICM20948_REG_ACCEL_ZOUT_L_SH        (ICM20948_BANK_0 | 0x32)    /**< Accelerometer Z-axis data low byte                     */
 
-typedef enum ICM20948_FIFO_MODE_CHOICE {
-    ICM20948_CONTINUOUS, ICM20948_STOP_WHEN_FULL
-} ICM20948_fifoMode;
+#define ICM20948_REG_GYRO_XOUT_H_SH         (ICM20948_BANK_0 | 0x33)    /**< Gyroscope X-axis data high byte                        */
+#define ICM20948_REG_GYRO_XOUT_L_SH         (ICM20948_BANK_0 | 0x34)    /**< Gyroscope X-axis data low byte                         */
+#define ICM20948_REG_GYRO_YOUT_H_SH         (ICM20948_BANK_0 | 0x35)    /**< Gyroscope Y-axis data high byte                        */
+#define ICM20948_REG_GYRO_YOUT_L_SH         (ICM20948_BANK_0 | 0x36)    /**< Gyroscope Y-axis data low byte                         */
+#define ICM20948_REG_GYRO_ZOUT_H_SH         (ICM20948_BANK_0 | 0x37)    /**< Gyroscope Z-axis data high byte                        */
+#define ICM20948_REG_GYRO_ZOUT_L_SH         (ICM20948_BANK_0 | 0x38)    /**< Gyroscope Z-axis data low byte                         */
 
-typedef enum ICM20948_GYRO_RANGE {
-    ICM20948_GYRO_RANGE_250, ICM20948_GYRO_RANGE_500, ICM20948_GYRO_RANGE_1000, ICM20948_GYRO_RANGE_2000
-} ICM20948_gyroRange;
+#define ICM20948_REG_TEMPERATURE_H          (ICM20948_BANK_0 | 0x39)    /**< Temperature data high byte                             */
+#define ICM20948_REG_TEMPERATURE_L          (ICM20948_BANK_0 | 0x3A)    /**< Temperature data low byte                              */
 
-typedef enum ICM20948_DLPF {
-    ICM20948_DLPF_0, ICM20948_DLPF_1, ICM20948_DLPF_2, ICM20948_DLPF_3, ICM20948_DLPF_4, ICM20948_DLPF_5, 
-    ICM20948_DLPF_6, ICM20948_DLPF_7, ICM20948_DLPF_OFF
-} ICM20948_dlpf;
+#define ICM20948_REG_EXT_SLV_SENS_DATA_00   (ICM20948_BANK_0 | 0x3B)    /**< First sensor data byte read from external I2C devices through I2C master interface */
 
-typedef enum ICM20948_GYRO_AVG_LOW_PWR {
-    ICM20948_GYR_AVG_1, ICM20948_GYR_AVG_2, ICM20948_GYR_AVG_4, ICM20948_GYR_AVG_8, ICM20948_GYR_AVG_16, 
-    ICM20948_GYR_AVG_32, ICM20948_GYR_AVG_64, ICM20948_GYR_AVG_128
-} ICM20948_gyroAvgLowPower;
+#define ICM20948_REG_TEMP_CONFIG            (ICM20948_BANK_0 | 0x53)    /**< Temperature Configuration register                     */
 
-typedef enum ICM20948_ACC_RANGE {
-    ICM20948_ACC_RANGE_2G, ICM20948_ACC_RANGE_4G, ICM20948_ACC_RANGE_8G, ICM20948_ACC_RANGE_16G
-} ICM20948_accRange;
+#define ICM20948_REG_FIFO_EN_1              (ICM20948_BANK_0 | 0x66)    /**< FIFO Enable 1 register                                 */
 
-typedef enum ICM20948_ACC_AVG_LOW_PWR {
-    ICM20948_ACC_AVG_4, ICM20948_ACC_AVG_8, ICM20948_ACC_AVG_16, ICM20948_ACC_AVG_32
-} ICM20948_accAvgLowPower;
+#define ICM20948_REG_FIFO_EN_2              (ICM20948_BANK_0 | 0x67)    /**< FIFO Enable 2 register                                 */
+#define ICM20948_BIT_ACCEL_FIFO_EN          0x10                        /**< Enable writing acceleration data to FIFO bit           */
+#define ICM20948_BITS_GYRO_FIFO_EN          0x0E                        /**< Enable writing gyroscope data to FIFO bit              */
 
-typedef enum ICM20948_WOM_COMP {
-    ICM20948_WOM_COMP_DISABLE, ICM20948_WOM_COMP_ENABLE
-} ICM20948_womCompEn;
+#define ICM20948_REG_FIFO_RST               (ICM20948_BANK_0 | 0x68)    /**< FIFO Reset register                                    */
+#define ICM20948_REG_FIFO_MODE              (ICM20948_BANK_0 | 0x69)    /**< FIFO Mode register                                     */
 
-typedef enum AK09916_OP_MODE {
-    AK09916_PWR_DOWN           = 0x00,
-    AK09916_TRIGGER_MODE       = 0x01,
-    AK09916_CONT_MODE_10HZ     = 0x02,
-    AK09916_CONT_MODE_20HZ     = 0x04,
-    AK09916_CONT_MODE_50HZ     = 0x06,
-    AK09916_CONT_MODE_100HZ    = 0x08
-} AK09916_opMode;
+#define ICM20948_REG_FIFO_COUNT_H           (ICM20948_BANK_0 | 0x70)    /**< FIFO data count high byte                              */
+#define ICM20948_REG_FIFO_COUNT_L           (ICM20948_BANK_0 | 0x71)    /**< FIFO data count low byte                               */
+#define ICM20948_REG_FIFO_R_W               (ICM20948_BANK_0 | 0x72)    /**< FIFO Read/Write register                               */
 
-typedef enum ICM20948_ORIENTATION {
-  ICM20948_FLAT, ICM20948_FLAT_1, ICM20948_XY, ICM20948_XY_1, ICM20948_YX, ICM20948_YX_1
-} ICM20948_orientation;
+#define ICM20948_REG_DATA_RDY_STATUS        (ICM20948_BANK_0 | 0x74)    /**< Data Ready Status register                             */
+#define ICM20948_BIT_RAW_DATA_0_RDY         0x01                        /**< Raw Data Ready bit                                     */
 
-struct xyzFloat {
-    float x;
-    float y;
-    float z;
-};
+#define ICM20948_REG_FIFO_CFG               (ICM20948_BANK_0 | 0x76)    /**< FIFO Configuration register                            */
+#define ICM20948_BIT_MULTI_FIFO_CFG         0x01                        /**< Interrupt status for each sensor is required           */
+#define ICM20948_BIT_SINGLE_FIFO_CFG        0x00                        /**< Interrupt status for only a single sensor is required  */
 
+/***********************/
+/* Bank 1 register map */
+/***********************/
+#define ICM20948_REG_XA_OFFSET_H            (ICM20948_BANK_1 | 0x14)    /**< Acceleration sensor X-axis offset cancellation high byte   */
+#define ICM20948_REG_XA_OFFSET_L            (ICM20948_BANK_1 | 0x15)    /**< Acceleration sensor X-axis offset cancellation low byte    */
+#define ICM20948_REG_YA_OFFSET_H            (ICM20948_BANK_1 | 0x17)    /**< Acceleration sensor Y-axis offset cancellation high byte   */
+#define ICM20948_REG_YA_OFFSET_L            (ICM20948_BANK_1 | 0x18)    /**< Acceleration sensor Y-axis offset cancellation low byte    */
+#define ICM20948_REG_ZA_OFFSET_H            (ICM20948_BANK_1 | 0x1A)    /**< Acceleration sensor Z-axis offset cancellation high byte   */
+#define ICM20948_REG_ZA_OFFSET_L            (ICM20948_BANK_1 | 0x1B)    /**< Acceleration sensor Z-axis offset cancellation low byte    */
 
-class ICM20948
-{
-public: 
+#define ICM20948_REG_TIMEBASE_CORR_PLL      (ICM20948_BANK_1 | 0x28)    /**< PLL Timebase Correction register                           */
+
+/***********************/
+/* Bank 2 register map */
+/***********************/
+#define ICM20948_REG_GYRO_SMPLRT_DIV        (ICM20948_BANK_2 | 0x00)    /**< Gyroscope Sample Rate Divider register     */
+
+#define ICM20948_REG_GYRO_CONFIG_1          (ICM20948_BANK_2 | 0x01)    /**< Gyroscope Configuration 1 register         */
+#define ICM20948_BIT_GYRO_FCHOICE           0x01                        /**< Gyro Digital Low-Pass Filter enable bit    */
+#define ICM20948_SHIFT_GYRO_FS_SEL          0x01                        /**< Gyro Full Scale Select bit shift           */
+#define ICM20948_SHIFT_GYRO_DLPCFG          0x03                        /**< Gyro DLPF Config bit shift                 */
+#define ICM20948_MASK_GYRO_FULLSCALE        0x06                        /**< Gyro Full Scale Select bit mask            */
+#define ICM20948_MASK_GYRO_BW               0x39                        /**< Gyro Bandwidth Select bit mask             */
+#define ICM20948_GYRO_FULLSCALE_250DPS      (0x00 << ICM20948_SHIFT_GYRO_FS_SEL)    /**< Gyro Full Scale = 250 deg/s  */
+#define ICM20948_GYRO_FULLSCALE_500DPS      (0x01 << ICM20948_SHIFT_GYRO_FS_SEL)    /**< Gyro Full Scale = 500 deg/s  */
+#define ICM20948_GYRO_FULLSCALE_1000DPS     (0x02 << ICM20948_SHIFT_GYRO_FS_SEL)    /**< Gyro Full Scale = 1000 deg/s */
+#define ICM20948_GYRO_FULLSCALE_2000DPS     (0x03 << ICM20948_SHIFT_GYRO_FS_SEL)    /**< Gyro Full Scale = 2000 deg/s */
+#define ICM20948_GYRO_BW_12100HZ            (0x00 << ICM20948_SHIFT_GYRO_DLPCFG)                                    /**< Gyro Bandwidth = 12100 Hz */
+#define ICM20948_GYRO_BW_360HZ              ( (0x07 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 360 Hz   */
+#define ICM20948_GYRO_BW_200HZ              ( (0x00 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 200 Hz   */
+#define ICM20948_GYRO_BW_150HZ              ( (0x01 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 150 Hz   */
+#define ICM20948_GYRO_BW_120HZ              ( (0x02 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 120 Hz   */
+#define ICM20948_GYRO_BW_51HZ               ( (0x03 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 51 Hz    */
+#define ICM20948_GYRO_BW_24HZ               ( (0x04 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 24 Hz    */
+#define ICM20948_GYRO_BW_12HZ               ( (0x05 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 12 Hz    */
+#define ICM20948_GYRO_BW_6HZ                ( (0x06 << ICM20948_SHIFT_GYRO_DLPCFG) | ICM20948_BIT_GYRO_FCHOICE)     /**< Gyro Bandwidth = 6 Hz     */
+
+#define ICM20948_REG_GYRO_CONFIG_2          (ICM20948_BANK_2 | 0x02)    /**< Gyroscope Configuration 2 register                     */
+#define ICM20948_BIT_GYRO_CTEN              0x38                        /**< Gyroscope Self-Test Enable bits                        */
+
+#define ICM20948_REG_XG_OFFS_USRH           (ICM20948_BANK_2 | 0x03)    /**< Gyroscope sensor X-axis offset cancellation high byte  */
+#define ICM20948_REG_XG_OFFS_USRL           (ICM20948_BANK_2 | 0x04)    /**< Gyroscope sensor X-axis offset cancellation low byte   */
+#define ICM20948_REG_YG_OFFS_USRH           (ICM20948_BANK_2 | 0x05)    /**< Gyroscope sensor Y-axis offset cancellation high byte  */
+#define ICM20948_REG_YG_OFFS_USRL           (ICM20948_BANK_2 | 0x06)    /**< Gyroscope sensor Y-axis offset cancellation low byte   */
+#define ICM20948_REG_ZG_OFFS_USRH           (ICM20948_BANK_2 | 0x07)    /**< Gyroscope sensor Z-axis offset cancellation high byte  */
+#define ICM20948_REG_ZG_OFFS_USRL           (ICM20948_BANK_2 | 0x08)    /**< Gyroscope sensor Z-axis offset cancellation low byte   */
+
+#define ICM20948_REG_ODR_ALIGN_EN           (ICM20948_BANK_2 | 0x09)    /**< Output Data Rate start time alignment                  */
+
+#define ICM20948_REG_ACCEL_SMPLRT_DIV_1     (ICM20948_BANK_2 | 0x10)    /**< Acceleration Sensor Sample Rate Divider 1 register     */
+#define ICM20948_REG_ACCEL_SMPLRT_DIV_2     (ICM20948_BANK_2 | 0x11)    /**< Acceleration Sensor Sample Rate Divider 2 register     */
+
+#define ICM20948_REG_ACCEL_INTEL_CTRL       (ICM20948_BANK_2 | 0x12)    /**< Accelerometer Hardware Intelligence Control register   */
+#define ICM20948_BIT_ACCEL_INTEL_EN         0x02                        /**< Wake-up On Motion enable bit                           */
+#define ICM20948_BIT_ACCEL_INTEL_MODE       0x01                        /**< WOM algorithm selection bit                            */
+
+#define ICM20948_REG_ACCEL_WOM_THR          (ICM20948_BANK_2 | 0x13)    /**< Wake-up On Motion Threshold register                   */
+
+#define ICM20948_REG_ACCEL_CONFIG           (ICM20948_BANK_2 | 0x14)    /**< Accelerometer Configuration register                   */
+#define ICM20948_BIT_ACCEL_FCHOICE          0x01                        /**< Accel Digital Low-Pass Filter enable bit               */
+#define ICM20948_SHIFT_ACCEL_FS             0x01                        /**< Accel Full Scale Select bit shift                      */
+#define ICM20948_SHIFT_ACCEL_DLPCFG         0x03                        /**< Accel DLPF Config bit shift                            */
+#define ICM20948_MASK_ACCEL_FULLSCALE       0x06                        /**< Accel Full Scale Select bit mask                       */
+#define ICM20948_MASK_ACCEL_BW              0x39                        /**< Accel Bandwidth Select bit mask                        */
+#define ICM20948_ACCEL_FULLSCALE_2G         (0x00 << ICM20948_SHIFT_ACCEL_FS)   /**< Accel Full Scale = 2 g     */
+#define ICM20948_ACCEL_FULLSCALE_4G         (0x01 << ICM20948_SHIFT_ACCEL_FS)   /**< Accel Full Scale = 4 g     */
+#define ICM20948_ACCEL_FULLSCALE_8G         (0x02 << ICM20948_SHIFT_ACCEL_FS)   /**< Accel Full Scale = 8 g     */
+#define ICM20948_ACCEL_FULLSCALE_16G        (0x03 << ICM20948_SHIFT_ACCEL_FS)   /**< Accel Full Scale = 16 g    */
+#define ICM20948_ACCEL_BW_1210HZ            (0x00 << ICM20948_SHIFT_ACCEL_DLPCFG)                                    /**< Accel Bandwidth = 1210 Hz  */
+#define ICM20948_ACCEL_BW_470HZ             ( (0x07 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 470 Hz   */
+#define ICM20948_ACCEL_BW_246HZ             ( (0x00 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 246 Hz   */
+#define ICM20948_ACCEL_BW_111HZ             ( (0x02 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 111 Hz   */
+#define ICM20948_ACCEL_BW_50HZ              ( (0x03 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 50 Hz    */
+#define ICM20948_ACCEL_BW_24HZ              ( (0x04 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 24 Hz    */
+#define ICM20948_ACCEL_BW_12HZ              ( (0x05 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 12 Hz    */
+#define ICM20948_ACCEL_BW_6HZ               ( (0x06 << ICM20948_SHIFT_ACCEL_DLPCFG) | ICM20948_BIT_ACCEL_FCHOICE)    /**< Accel Bandwidth = 6 Hz     */
+
+#define ICM20948_REG_ACCEL_CONFIG_2         (ICM20948_BANK_2 | 0x15)    /**< Accelerometer Configuration 2 register             */
+#define ICM20948_BIT_ACCEL_CTEN             0x1C                        /**< Accelerometer Self-Test Enable bits                */
+
+/***********************/
+/* Bank 3 register map */
+/***********************/
+#define ICM20948_REG_I2C_MST_ODR_CONFIG     (ICM20948_BANK_3 | 0x00)    /**< I2C Master Output Data Rate Configuration register */
+
+#define ICM20948_REG_I2C_MST_CTRL           (ICM20948_BANK_3 | 0x01)    /**< I2C Master Control register                        */
+#define ICM20948_BIT_I2C_MST_P_NSR          0x10                        /**< Stop between reads enabling bit                    */
+#define ICM20948_I2C_MST_CTRL_CLK_400KHZ    0x07                        /**< I2C_MST_CLK = 345.6 kHz (for 400 kHz Max)          */
+
+#define ICM20948_REG_I2C_MST_DELAY_CTRL     (ICM20948_BANK_3 | 0x02)    /**< I2C Master Delay Control register                  */
+#define ICM20948_BIT_SLV0_DLY_EN            0x01                        /**< I2C Slave0 Delay Enable bit                        */
+#define ICM20948_BIT_SLV1_DLY_EN            0x02                        /**< I2C Slave1 Delay Enable bit                        */
+#define ICM20948_BIT_SLV2_DLY_EN            0x04                        /**< I2C Slave2 Delay Enable bit                        */
+#define ICM20948_BIT_SLV3_DLY_EN            0x08                        /**< I2C Slave3 Delay Enable bit                        */
+
+#define ICM20948_REG_I2C_SLV0_ADDR          (ICM20948_BANK_3 | 0x03)    /**< I2C Slave0 Physical Address register               */
+#define ICM20948_REG_I2C_SLV0_REG           (ICM20948_BANK_3 | 0x04)    /**< I2C Slave0 Register Address register               */
+#define ICM20948_REG_I2C_SLV0_CTRL          (ICM20948_BANK_3 | 0x05)    /**< I2C Slave0 Control register                        */
+#define ICM20948_REG_I2C_SLV0_DO            (ICM20948_BANK_3 | 0x06)    /**< I2C Slave0 Data Out register                       */
+
+#define ICM20948_REG_I2C_SLV1_ADDR          (ICM20948_BANK_3 | 0x07)    /**< I2C Slave1 Physical Address register               */
+#define ICM20948_REG_I2C_SLV1_REG           (ICM20948_BANK_3 | 0x08)    /**< I2C Slave1 Register Address register               */
+#define ICM20948_REG_I2C_SLV1_CTRL          (ICM20948_BANK_3 | 0x09)    /**< I2C Slave1 Control register                        */
+#define ICM20948_REG_I2C_SLV1_DO            (ICM20948_BANK_3 | 0x0A)    /**< I2C Slave1 Data Out register                       */
+
+#define ICM20948_REG_I2C_SLV2_ADDR          (ICM20948_BANK_3 | 0x0B)    /**< I2C Slave2 Physical Address register               */
+#define ICM20948_REG_I2C_SLV2_REG           (ICM20948_BANK_3 | 0x0C)    /**< I2C Slave2 Register Address register               */
+#define ICM20948_REG_I2C_SLV2_CTRL          (ICM20948_BANK_3 | 0x0D)    /**< I2C Slave2 Control register                        */
+#define ICM20948_REG_I2C_SLV2_DO            (ICM20948_BANK_3 | 0x0E)    /**< I2C Slave2 Data Out register                       */
+
+#define ICM20948_REG_I2C_SLV3_ADDR          (ICM20948_BANK_3 | 0x0F)    /**< I2C Slave3 Physical Address register               */
+#define ICM20948_REG_I2C_SLV3_REG           (ICM20948_BANK_3 | 0x10)    /**< I2C Slave3 Register Address register               */
+#define ICM20948_REG_I2C_SLV3_CTRL          (ICM20948_BANK_3 | 0x11)    /**< I2C Slave3 Control register                        */
+#define ICM20948_REG_I2C_SLV3_DO            (ICM20948_BANK_3 | 0x12)    /**< I2C Slave3 Data Out register                       */
+
+#define ICM20948_REG_I2C_SLV4_ADDR          (ICM20948_BANK_3 | 0x13)    /**< I2C Slave4 Physical Address register               */
+#define ICM20948_REG_I2C_SLV4_REG           (ICM20948_BANK_3 | 0x14)    /**< I2C Slave4 Register Address register               */
+#define ICM20948_REG_I2C_SLV4_CTRL          (ICM20948_BANK_3 | 0x15)    /**< I2C Slave4 Control register                        */
+#define ICM20948_REG_I2C_SLV4_DO            (ICM20948_BANK_3 | 0x16)    /**< I2C Slave4 Data Out register                       */
+#define ICM20948_REG_I2C_SLV4_DI            (ICM20948_BANK_3 | 0x17)    /**< I2C Slave4 Data In register                        */
+
+#define ICM20948_BIT_I2C_SLV_READ           0x80                        /**< I2C Slave Read bit                                 */
+#define ICM20948_BIT_I2C_SLV_EN             0x80                        /**< I2C Slave Enable bit                               */
+#define ICM20948_BIT_I2C_BYTE_SW            0x40                        /**< I2C Slave Byte Swap enable bit                     */
+#define ICM20948_BIT_I2C_REG_DIS            0x20                        /**< I2C Slave Do Not Write Register Value bit          */
+#define ICM20948_BIT_I2C_GRP                0x10                        /**< I2C Slave Group bit                                */
+#define ICM20948_BIT_I2C_READ               0x80                        /**< I2C Slave R/W bit                                  */
+
+/* Register common for all banks */
+#define ICM20948_REG_BANK_SEL               0x7F                        /**< Bank Select register                               */
+
+#define ICM20948_DEVICE_ID                  0xEA                        /**< Device ID value                                    */
+
+/*****************************/
+/* AK09916 register map */
+/*****************************/
+#define AK09916_REG_WHO_AM_I                0x01                        /**< AK09916 Device ID register             */
+#define AK09916_DEVICE_ID                   0x09                        /**< AK09916 Device ID value                */
+
+#define AK09916_REG_STATUS_1                0x10                        /**< Status 1 register                      */
+#define AK09916_BIT_DRDY                    0x01                        /**< Data Ready bit                         */
+#define AK09916_BIT_DOR                     0x02                        /**< Data Overrun bit                       */
+
+#define AK09916_REG_HXL                     0x11                        /**< Magnetometer X-axis data lower byte    */
+#define AK09916_REG_HXH                     0x12                        /**< Magnetometer X-axis data higher byte   */
+#define AK09916_REG_HYL                     0x13                        /**< Magnetometer Y-axis data lower byte    */
+#define AK09916_REG_HYH                     0x14                        /**< Magnetometer Y-axis data higher byte   */
+#define AK09916_REG_HZL                     0x15                        /**< Magnetometer Z-axis data lower byte    */
+#define AK09916_REG_HZH                     0x16                        /**< Magnetometer Z-axis data higher byte   */
+
+#define AK09916_REG_STATUS_2                0x18                        /**< Status 2 register                      */
+
+#define AK09916_REG_CONTROL_2               0x31                        /**< Control 2 register                     */
+#define AK09916_BIT_MODE_POWER_DOWN         0x00                        /**< Power-down                             */
+#define AK09916_MODE_SINGLE                 0x01                        /**< Magnetometer takes one measurement     */
+#define AK09916_MODE_10HZ                   0x02                        /**< Magnetometer Measurement Rate = 10HZ   */
+#define AK09916_MODE_20HZ                   0x04                        /**< Magnetometer Measurement Rate = 20HZ   */
+#define AK09916_MODE_50HZ                   0x06                        /**< Magnetometer Measurement Rate = 50HZ   */
+#define AK09916_MODE_100HZ                  0x08                        /**< Magnetometer Measurement Rate = 100HZ  */
+#define AK09916_MODE_ST                     0x16                        /**< Self-test                              */
+
+#define AK09916_REG_CONTROL_3               0x32                        /**< Control 3 register                     */
+#define AK09916_BIT_SRST                    0x01                        /**< Soft Reset bit                         */
+
+#define AK09916_REG_WHO_AM_I                0x01                        /**< AK09916 Device ID register             */
+#define AK09916_BIT_I2C_SLV_ADDR            0x0C                        /**< AK09916 I2C Slave Address              */
+/**@}*/
+
+/** @endcond */
+
+class ICM20948 {
+
+public:
+    /** 
+     * ICM20948 constructor
+     */
+    ICM20948(void);
+
+    /**
+     * ICM20948 destructor
+     */
+    ~ICM20948(void);
+
+    /** Probe for ICM20948 and try to initialize sensor
+     *
+     * @param[in] offset_gx_1000dps Gyroscope X axis offset in current full scale format.
+     * @param[in] offset_gy_1000dps Gyroscope Y axis offset in current full scale format.
+     * @param[in] offset_gz_1000dps Gyroscope Z axis offset in current full scale format.
+     * @param[in] offset_ax_32g Accelerometer X axis offset in current full scale format.
+     * @param[in] offset_ay_32g Accelerometer Y axis offset in current full scale format.
+     * @param[in] offset_az_32g Accelerometer Z axis offset in current full scale format.
+     * @param[in] offset_mx Magnetometer X axis hard iron distortion correction.
+     * @param[in] offset_my Magnetometer Y axis hard iron distortion correction.
+     * @param[in] offset_mz Magnetometer Z axis hard iron distortion correction.
+     * @param[in] scale_mx Magnetometer X axis soft iron distortion correction.
+     * @param[in] scale_my Magnetometer Y axis soft iron distortion correction.
+     * @param[in] scale_mz Magnetometer Z axis soft iron distortion correction.
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool init(int16_t offset_gx_1000dps, int16_t offset_gy_1000dps, int16_t offset_gz_1000dps, int16_t offset_ax_32g, int16_t offset_ay_32g, int16_t offset_az_32g, float offset_mx, float offset_my, float offset_mz, float scale_mx, float scale_my, float scale_mz);
+
+    /** Read accelerometer resolution
+     *
+     * @param[out] accelRes Accelerometer resolution in g/bit
+     *
+     */
+    void read_accelRes(float &accelRes);
+
+    /** Read accelerometer and gyroscope values
+     *
+     * @param[out] ax Accelerometer X axis value
+     * @param[out] ay Accelerometer Y axis value
+     * @param[out] az Accelerometer Z axis value
+     * @param[out] gx Gyroscope X axis value
+     * @param[out] gy Gyroscope Y axis value
+     * @param[out] gz Gyroscope Z axis value
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_accel_gyro(int16_t &ax, int16_t &ay, int16_t &az, int16_t &gx, int16_t &gy, int16_t &gz);
+
+    /** Read accelerometer values
+     *
+     * @param[out] ax Accelerometer X axis value
+     * @param[out] ay Accelerometer Y axis value
+     * @param[out] az Accelerometer Z axis value
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_accel(int16_t &ax, int16_t &ay, int16_t &az);
     
-    /* Constructors */
-    
-    ICM20948(int addr);
-    ICM20948();
-    ICM20948(TwoWire *w, int addr);
-    ICM20948(TwoWire *w);           
-    
-   
-   /* Basic settings */
+    /** Read gyroscope values
+     *
+     * @param[out] gx Gyroscope X axis value
+     * @param[out] gy Gyroscope Y axis value
+     * @param[out] gz Gyroscope Z axis value
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_gyro(int16_t &gx, int16_t &gy, int16_t &gz);
 
-    bool init();
-    void autoOffsets();
-    void setAccOffsets(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax);
-    void setGyrOffsets(float xOffset, float yOffset, float zOffset);    
-    uint8_t whoAmI();
-    void enableAcc(bool enAcc);
-    void setAccRange(ICM20948_accRange accRange);
-    void setAccDLPF(ICM20948_dlpf dlpf); 
-    void setAccSampleRateDivider(uint16_t accSplRateDiv);
-    void enableGyr(bool enGyr);
-    void setGyrRange(ICM20948_gyroRange gyroRange);
-    void setGyrDLPF(ICM20948_dlpf dlpf); 
-    void setGyrSampleRateDivider(uint8_t gyrSplRateDiv);
-    void setTempDLPF(ICM20948_dlpf dlpf);
-    void setI2CMstSampleRate(uint8_t rateExp);
-        
-            
-    /* x,y,z results */
+    /** Read magnetometer values
+     *
+     * @param[out] mx Magnetometer X axis value
+     * @param[out] my Magnetometer Y axis value
+     * @param[out] mz Magnetometer Z axis value
+     *
+     * @return
+     *   'true' if new data,
+     *   'false' else.
+     */
+    bool read_mag(int16_t &mx, int16_t &my, int16_t &mz);
+
+    /** Read temperature value
+     *
+     * @param[out] temperature Temperature value
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_temperature(int16_t &temperature);
     
-    void readSensor(); 
-    xyzFloat getAccRawValues();
-    xyzFloat getCorrectedAccRawValues();
-    xyzFloat getGValues();
-    xyzFloat getAccRawValuesFromFifo();
-    xyzFloat getCorrectedAccRawValuesFromFifo();
-    xyzFloat getGValuesFromFifo();
-    float getResultantG(xyzFloat gVal); 
-    float getTemperature();
-    xyzFloat getGyrRawValues();
-    xyzFloat getCorrectedGyrRawValues();
-    xyzFloat getGyrValues(); 
-    xyzFloat getGyrValuesFromFifo();
-    xyzFloat getMagValues();
+    /** Read accelerometer in g and gyroscope in deg/s
+     *
+     * @param[out] ax_g Accelerometer X axis value in g
+     * @param[out] ay_g Accelerometer Y axis value in g
+     * @param[out] az_g Accelerometer Z axis value in g
+     * @param[out] gx_dps Gyroscope X axis value in deg/s
+     * @param[out] gy_dps Gyroscope Y axis value in deg/s
+     * @param[out] gz_dps Gyroscope Z axis value in deg/s
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_accel_gyro_g_dps(float &ax_g, float &ay_g, float &az_g, float &gx_dps, float &gy_dps, float &gz_dps);
     
-        
-    /* Angles and Orientation */ 
+    /** Read accelerometer in g
+     *
+     * @param[out] ax_g Accelerometer X axis value in g
+     * @param[out] ay_g Accelerometer Y axis value in g
+     * @param[out] az_g Accelerometer Z axis value in g
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+     bool read_accel_g(float &ax_g, float &ay_g, float &az_g);
+     
+     /** read gyroscope in deg/s
+     *
+     * @param[out] gx_dps Gyroscope X axis value in deg/s
+     * @param[out] gy_dps Gyroscope Y axis value in deg/s
+     * @param[out] gz_dps Gyroscope Z axis value in deg/s
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_gyro_dps(float &gx_dps, float &gy_dps, float &gz_dps);
     
-    xyzFloat getAngles();
-    ICM20948_orientation getOrientation();
-    String getOrientationAsString();
-    float getPitch();
-    float getRoll();
+    /** Read magnetometer in uT
+     *
+     * @param[out] mx_uT Magnetometer X axis value in uT
+     * @param[out] my_uT Magnetometer Y axis value in uT
+     * @param[out] mz_uT Magnetometer Z axis value in uT
+     *
+     * @return
+     *   'true' if new data,
+     *   'false' else.
+     */
+    bool read_mag_ut(float &mx_uT, float &my_uT, float &mz_uT);
     
+    /** Read temperature in Celsius
+     *
+     * @param [out] temperature_c Temperature value in Celsius
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_temperature_c(float &temperature_c);
     
-    /* Power, Sleep, Standby */ 
+    /** Read accelerometer values and gyroscope in rad/s
+     *
+     * @param[out] ax Accelerometer X axis value
+     * @param[out] ay Accelerometer Y axis value
+     * @param[out] az Accelerometer Z axis value
+     * @param[out] gx_rps Gyroscope X axis value in rad/s
+     * @param[out] gy_rps Gyroscope Y axis value in rad/s
+     * @param[out] gz_rps Gyroscope Z axis value in rad/s
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_accel_gyro_rps(int16_t &ax, int16_t &ay, int16_t &az, float &gx_rps, float &gy_rps, float &gz_rps);
     
-    void enableCycle(ICM20948_cycle cycle);
-    void enableLowPower(bool enLP);
-    void setGyrAverageInCycleMode(ICM20948_gyroAvgLowPower avg);
-    void setAccAverageInCycleMode(ICM20948_accAvgLowPower avg);
-    void sleep(bool sleep);
+    /** read gyroscope in rad/s
+     *
+     * @param[out] gx_rps Gyroscope X axis value in rad/s
+     * @param[out] gy_rps Gyroscope Y axis value in rad/s
+     * @param[out] gz_rps Gyroscope Z axis value in rad/s
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool read_gyro_rps(float &gx_rps, float &gy_rps, float &gz_rps);
     
-   
-    /* Interrupts */
+    /** Reset accelerometer and gyroscope offsets to factory defaults
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool reset_accel_gyro_offsets();
     
-    void setIntPinPolarity(ICM20948_intPinPol pol);
-    void enableIntLatch(bool latch);
-    void enableClearIntByAnyRead(bool clearByAnyRead);
-    void setFSyncIntPolarity(ICM20948_intPinPol pol);
-    void enableInterrupt(ICM20948_intType intType);
-    void disableInterrupt(ICM20948_intType intType);
-    uint8_t readAndClearInterrupts();
-    bool checkInterrupt(uint8_t source, ICM20948_intType type);
-    void setWakeOnMotionThreshold(uint8_t womThresh, ICM20948_womCompEn womCompEn);
+    /** Accelerometer and gyroscope calibration function. Get accelerometer and
+     *  gyroscope mean values, while device is at rest and in level. Those
+     *  are then loaded into ICM20948 bias registers to remove the static 
+     *  offset error.
+     *
+     * @param[in] imuInterrupt imu interrupt flag
+     * @param[in] time_s Time period in seconds for mean value calculation
+     * @param[in] accel_tolerance_32g Maximum accelerometer mean value deviation from target value in 32g full scale format. The accelerometer
+     *            target values in x and y direction are zero and in z direction it is the acceleration due to gravity.
+     * @param[in] gyro_tolerance_1000dps Maximum gyroscope mean value deviation from zero after calibration at 1000dps full scale
+     * @param[out] offset_ax_32g Accelerometer X axis offset in current full scale format.
+     * @param[out] offset_ay_32g Accelerometer Y axis offset in current full scale format.
+     * @param[out] offset_az_32g Accelerometer Z axis offset in current full scale format.
+     * @param[out] offset_gx_1000dps Gyroscope X axis offset in current full scale format.
+     * @param[out] offset_gy_1000dps Gyroscope Y axis offset in current full scale format.
+     * @param[out] offset_gz_1000dps Gyroscope Z axis offset in current full scale format.
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool calibrate_accel_gyro(volatile bool &imuInterrupt, float time_s, int32_t accel_tolerance_32g, int32_t gyro_tolerance_1000dps, int16_t &offset_ax_32g, int16_t &offset_ay_32g, int16_t &offset_az_32g, int16_t &offset_gx_1000dps, int16_t &offset_gy_1000dps, int16_t &offset_gz_1000dps);
     
+    /** Gyroscope calibration function. Get gyroscope mean values, while device is at rest. 
+     *  Those are then loaded into ICM20948 bias registers to remove the static offset error.
+     *
+     * @param[in] imuInterrupt imu interrupt flag
+     * @param[in] time_s Time period in seconds for mean value calculation
+     * @param[in] gyro_tolerance_1000dps Maximum gyroscope mean value deviation from zero in 1000dps full scale format
+     * @param[out] offset_gx_1000dps Gyroscope X axis offset in current full scale format.
+     * @param[out] offset_gy_1000dps Gyroscope Y axis offset in current full scale format.
+     * @param[out] offset_gz_1000dps Gyroscope Z axis offset in current full scale format.
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool calibrate_gyro(volatile bool &imuInterrupt, float time_s, int32_t gyro_tolerance_1000dps, int16_t &offset_gx_1000dps, int16_t &offset_gy_1000dps, int16_t &offset_gz_1000dps);
     
-    /* FIFO */
+     /** Accelerometer calibration function. Get accelerometer mean values, while device is at rest and in level.
+     *  Those are then loaded into ICM20948 bias registers to remove the static offset error.
+     *
+     * @param[in] imuInterrupt imu interrupt flag
+     * @param[in] time_s Time period in seconds for mean value calculation
+     * @param[in] accel_tolerance_32g Maximum accelerometer mean value deviation from target value in 32g full scale format. The accelerometer
+     *            target values in x and y direction are zero and in z direction it is the acceleration due to gravity.
+     * @param[out] offset_ax_32g Accelerometer X axis offset in current full scale format.
+     * @param[out] offset_ay_32g Accelerometer Y axis offset in current full scale format.
+     * @param[out] offset_az_32g Accelerometer Z axis offset in current full scale format.
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool calibrate_accel(volatile bool &imuInterrupt, float time_s, int32_t accel_tolerance_32g, int16_t &offset_ax_32g, int16_t &offset_ay_32g, int16_t &offset_az_32g);
     
-    void enableFifo(bool fifo);
-    void setFifoMode(ICM20948_fifoMode mode);
-    void startFifo(ICM20948_fifoType fifo);
-    void stopFifo();
-    void resetFifo();
-    int16_t getFifoCount();
-    int16_t getNumberOfFifoDataSets();
-    void findFifoBegin();
-    
-    
-    /* Magnetometer */
-    
-    bool initMagnetometer();
-    int16_t whoAmIMag();
-    void setMagOpMode(AK09916_opMode opMode);
-    void resetMag();
+    /** Magnetometer calibration function. Get magnetometer minimum and maximum values, while moving 
+     *  the device in a figure eight. Those values are then used to cancel out hard and soft iron distortions.
+     *
+     * @param[in]  imuInterrupt imu interrupt flag
+     * @param[in]  time_s Time period in seconds for minimum and maximum value calculation
+     * @param[in]  mag_minimumRange Minimum range (maximum - minimum value) for all directions. 
+     *             if the range is smaller than the minimum range, the time period starts again.
+	 * @param[out] offset_mx Magnetometer X axis hard iron distortion correction.
+     * @param[out] offset_my Magnetometer Y axis hard iron distortion correction.
+     * @param[out] offset_mz Magnetometer Z axis hard iron distortion correction.
+     * @param[out] scale_mx Magnetometer X axis soft iron distortion correction.
+     * @param[out] scale_my Magnetometer Y axis soft iron distortion correction.
+     * @param[out] scale_mz Magnetometer Z axis soft iron distortion correction.
+     *
+     * @return
+     *   'true' if successful,
+     *   'false' on error.
+     */
+    bool calibrate_mag(volatile bool &imuInterrupt, float time_s, int32_t mag_minimumRange, float &offset_mx, float &offset_my, float &offset_mz, float &scale_mx, float &scale_my, float &scale_mz);
     
 private:
-    TwoWire *_wire;
-    int i2cAddress;
-    uint8_t currentBank;
-    uint8_t buffer[20]; 
-    xyzFloat accOffsetVal;
-    xyzFloat accCorrFactor;
-    xyzFloat gyrOffsetVal;
-    uint8_t accRangeFactor;
-    uint8_t gyrRangeFactor;
-    uint8_t regVal;   // intermediate storage of register values
-    ICM20948_fifoType fifoType;
+    /* Private variables */
+    float m_accelRes;
+    float m_gyroRes;
+    float m_gyroRes_rad;
+    const float m_magRes = 4912.0f / 32752.0f;    /*    Measurement range of each axis +-4912 uT is saved in 16 bit output +-32752    */
     
-    void setClockToAutoSelect();
-    xyzFloat correctAccRawValues(xyzFloat accRawVal);
-    xyzFloat correctGyrRawValues(xyzFloat gyrRawVal);
-    void switchBank(uint8_t newBank);
-    uint8_t writeRegister8(uint8_t bank, uint8_t reg, uint8_t val);
-    uint8_t writeRegister16(uint8_t bank, uint8_t reg, int16_t val);
-    uint8_t readRegister8(uint8_t bank, uint8_t reg);
-    int16_t readRegister16(uint8_t bank, uint8_t reg);
-    void readAllData(uint8_t* data);
-    xyzFloat readICM20948xyzValFromFifo();
-    void writeAK09916Register8(uint8_t reg, uint8_t val);
-    uint8_t readAK09916Register8(uint8_t reg);
-    int16_t readAK09916Register16(uint8_t reg);
-    uint8_t reset_ICM20948();
-    void enableI2CMaster();
-    void enableMagDataRead(uint8_t reg, uint8_t bytes);
+    int16_t m_g;    /*  Acceleration of gravity in LSB  */
+    
+    /* Magnetometer hard iron distortion correction */
+    float m_offset_mx = 0, m_offset_my = 0, m_offset_mz = 0;
+    /* Magnetometer soft iron distortion correction */
+    float m_scale_mx = 1, m_scale_my = 1, m_scale_mz = 1;
+    
+    /* Pure virtual functions */
+    virtual void read_register(uint16_t addr, uint8_t numBytes, uint8_t *data) = 0;
+    virtual void write_register(uint16_t addr, uint8_t data) = 0;
+    virtual void select_bank(uint8_t bank) = 0;
+    
+    void read_mag_register(uint8_t addr, uint8_t numBytes, uint8_t *data);
+    void write_mag_register(uint8_t addr, uint8_t data);
+    void set_mag_transfer(bool read);
+    
+    uint32_t reset(void);
+    uint32_t reset_mag(void);
+    uint32_t set_accel_sample_rate_div(uint16_t accelDiv);
+    uint32_t set_gyro_sample_rate_div(uint8_t gyroDiv);
+    uint32_t set_accel_bandwidth(uint8_t accelBw);
+    uint32_t set_gyro_bandwidth(uint8_t gyroBw);
+    uint32_t set_accel_fullscale(uint8_t accelFs);
+    uint32_t set_gyro_fullscale(uint8_t gyroFs);
+    uint32_t set_mag_mode(uint8_t magMode);
+    uint32_t set_accel_offsets(int16_t offset_ax, int16_t offset_ay, int16_t offset_az);
+    uint32_t set_gyro_offsets(int16_t offset_gx, int16_t offset_gy, int16_t offset_gz);
+    uint32_t get_accel_resolution(float &accelRes);
+    uint32_t get_gyro_resolution(float &gyroRes);
+    uint32_t get_accel_offsets(int16_t &offset_ax, int16_t &offset_ay, int16_t &offset_az);
+    uint32_t get_gyro_offsets(int16_t &offset_gx, int16_t &offset_gy, int16_t &offset_gz);
+    uint32_t enable_sleepmode(bool enable);
+    uint32_t enable_cyclemode(bool enable);
+    uint32_t enable_sensor(bool accel, bool gyro, bool temp);
+    uint32_t enable_lowpowermode(bool enAccel, bool enGyro, bool enTemp);
+    uint32_t enable_wake_on_motion(bool enable, uint8_t womThreshold, uint16_t accelDiv);
+    uint32_t mean_accel_gyro(volatile bool &imuInterrupt, float time_s, int16_t &mean_ax, int16_t &mean_ay, int16_t &mean_az, int16_t &mean_gx, int16_t &mean_gy, int16_t &mean_gz);
+    uint32_t min_max_mag(volatile bool &imuInterrupt, float time_s, int32_t mag_minimumRange, int16_t &min_mx, int16_t &max_mx, int16_t &min_my, int16_t &max_my, int16_t &min_mz, int16_t &max_mz);
+    uint32_t enable_irq(bool dataReadyEnable, bool womEnable);
+    uint32_t read_irqstatus(uint32_t &int_status);
+    bool is_data_ready(void);
+};
 
+class ICM20948_SPI : public ICM20948 {
+
+public:
+    /** Create an ICM20948_SPI object connected to specified SPI pins and with specified SPI settings for clock, bit order and data mode
+     *
+     * @param[in] cs_pin    SPI chip select pin.
+     * @param[in] port      SPI port.
+     * @param[in] clock     SPI clock.
+     * @param[in] bit_order SPI bit order.
+     * @param[in] data_mode SPI data mode.
+     * 
+     */
+    ICM20948_SPI(uint8_t cs_pin, SPIClass &port = SPI, uint32_t clock = 7e6, uint8_t bit_order = MSBFIRST, uint8_t data_mode = SPI_MODE3);
+    
+    /**
+     * ICM20948_SPI destructor
+     */
+    ~ICM20948_SPI(void);
+
+private:
+    /* SPI variables */
+    const uint8_t M_CS_PIN;
+    SPIClass &m_port;
+    const uint32_t M_CLOCK;
+    const uint8_t M_BIT_ORDER;
+    const uint8_t M_DATA_MODE;
+    
+    /* Private functions */
+    void read_register(uint16_t addr, uint8_t numBytes, uint8_t *data);
+    void write_register(uint16_t addr, uint8_t data);
+    void select_bank(uint8_t bank);
 };
 
 #endif

@@ -28,7 +28,7 @@
 
 //define your robot' specs here
 #define MAX_RPM 100               // motor's maximum RPM
-#define COUNTS_PER_REV 3756       // wheel encoder's no of ticks per rev
+#define COUNTS_PER_REV 3767       // wheel encoder's no of ticks per rev
 #define WHEEL_DIAMETER 0.07       // wheel's diameter in meters
 #define PWM_BITS 12                // PWM Resolution of the microcontroller
 #define LR_WHEELS_DISTANCE 0.185  // distance between left and right wheels
@@ -64,11 +64,11 @@ ROBOT ORIENTATION
 #define MOTOR2_ENCODER_A 0
 #define MOTOR2_ENCODER_B 1 
 
-#define MOTOR3_ENCODER_A 50
-#define MOTOR3_ENCODER_B 51 
+//#define MOTOR3_ENCODER_A 50
+//#define MOTOR3_ENCODER_B 51 
 
-#define MOTOR4_ENCODER_A 52
-#define MOTOR4_ENCODER_B 53
+//#define MOTOR4_ENCODER_A 52
+//#define MOTOR4_ENCODER_B 53
 
 //MOTOR PINS
 #ifdef USE_L298_DRIVER
@@ -82,13 +82,13 @@ ROBOT ORIENTATION
   #define MOTOR2_IN_A 4
   #define MOTOR2_IN_B 3
 
-  #define MOTOR3_PWM 54
-  #define MOTOR3_IN_A 55
-  #define MOTOR3_IN_B 56
+  //#define MOTOR3_PWM 54
+  //#define MOTOR3_IN_A 55
+  //#define MOTOR3_IN_B 56
 
-  #define MOTOR4_PWM 57
-  #define MOTOR4_IN_A 58
-  #define MOTOR4_IN_B 59
+  //#define MOTOR4_PWM 57
+  //#define MOTOR4_IN_A 58
+  //#define MOTOR4_IN_B 59
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
   #define PWM_MIN -PWM_MAX
@@ -105,13 +105,13 @@ ROBOT ORIENTATION
   #define MOTOR2_IN_A 5
   #define MOTOR2_IN_B 6
 
-  #define MOTOR3_PWM 0 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A 22
-  #define MOTOR3_IN_B 23
+  //#define MOTOR3_PWM 0 //DON'T TOUCH THIS! This is just a placeholder
+  //#define MOTOR3_IN_A 22
+  //#define MOTOR3_IN_B 23
 
-  #define MOTOR4_PWM 2 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A 4
-  #define MOTOR4_IN_B 3
+  //#define MOTOR4_PWM 2 //DON'T TOUCH THIS! This is just a placeholder
+  //#define MOTOR4_IN_A 4
+  //#define MOTOR4_IN_B 3
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
   #define PWM_MIN -PWM_MAX
@@ -128,13 +128,13 @@ ROBOT ORIENTATION
   #define MOTOR2_IN_A 5
   #define MOTOR2_IN_B 6
 
-  #define MOTOR3_PWM 0 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A 22
-  #define MOTOR3_IN_B 23
+  //#define MOTOR3_PWM 0 //DON'T TOUCH THIS! This is just a placeholder
+  //#define MOTOR3_IN_A 22
+  //#define MOTOR3_IN_B 23
 
-  #define MOTOR4_PWM 2 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A 4
-  #define MOTOR4_IN_B 3
+  //#define MOTOR4_PWM 2 //DON'T TOUCH THIS! This is just a placeholder
+  //#define MOTOR4_IN_A 4
+  //#define MOTOR4_IN_B 3
 
   #define PWM_MAX 400
   #define PWM_MIN -PWM_MAX

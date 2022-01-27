@@ -22,9 +22,9 @@
 #include "Kinematics.h"
 #include "PID.h"
 #include "Imu.h"
-#include "Encoder.h"
-#define ENCODER_OPTIMIZE_INTERRUPTS // comment this out on Non-Teensy boards
 
+#define ENCODER_OPTIMIZE_INTERRUPTS // comment this out on Non-Teensy boards
+#include "Encoder.h"
 
 #define IMU_PUBLISH_RATE 20 //hz
 #define COMMAND_RATE 20 //hz

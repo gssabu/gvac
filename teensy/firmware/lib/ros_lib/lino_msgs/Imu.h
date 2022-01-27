@@ -1,5 +1,5 @@
-#ifndef _ROS_lino_msgs_Imu_h
-#define _ROS_lino_msgs_Imu_h
+#ifndef _ROS_gvac_msgs_Imu_h
+#define _ROS_gvac_msgs_Imu_h
 
 #include <stdint.h>
 #include <string.h>
@@ -7,7 +7,7 @@
 #include "ros/msg.h"
 #include "geometry_msgs/Vector3.h"
 
-namespace lino_msgs
+namespace gvac_msgs
 {
 
   class Imu : public ros::Msg
@@ -45,7 +45,7 @@ namespace lino_msgs
      return offset;
     }
 
-    const char * getType(){ return "lino_msgs/Imu"; };
+    const char * getType(){ return "gvac_msgs/Imu"; };
     const char * getMD5(){ return "275110405f08e1b7c0c0f1aba3e19c67"; };
 
   };

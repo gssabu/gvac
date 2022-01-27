@@ -12,7 +12,7 @@ class GvacBase
 {
 public:
     GvacBase();
-    void velCallback(const Gvac_msgs::Velocities& vel);
+    void velCallback(const gvac_msgs::Velocities& vel);
 
 private:
     ros::NodeHandle nh_;

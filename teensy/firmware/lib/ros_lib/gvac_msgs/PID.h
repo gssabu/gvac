@@ -1,12 +1,12 @@
-#ifndef _ROS_lino_msgs_PID_h
-#define _ROS_lino_msgs_PID_h
+#ifndef _ROS_gvac_msgs_PID_h
+#define _ROS_gvac_msgs_PID_h
 
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include "ros/msg.h"
 
-namespace lino_msgs
+namespace gvac_msgs
 {
 
   class PID : public ros::Msg
@@ -101,7 +101,7 @@ namespace lino_msgs
      return offset;
     }
 
-    const char * getType(){ return "lino_msgs/PID"; };
+    const char * getType(){ return "gvac_msgs/PID"; };
     const char * getMD5(){ return "a559df187bdf63f426d5f304b6b28bb4"; };
 
   };

@@ -94,7 +94,7 @@ ROBOT ORIENTATION
   #define PWM_MIN -PWM_MAX
 #endif 
 
-/*#ifdef USE_BTS7960_DRIVER
+#ifdef USE_BTS7960_DRIVER
   #define MOTOR_DRIVER BTS7960  
 
   #define MOTOR1_PWM 1 //DON'T TOUCH THIS! This is just a placeholder
@@ -139,7 +139,7 @@ ROBOT ORIENTATION
   #define PWM_MAX 400
   #define PWM_MIN -PWM_MAX
 #endif
-*/
+
 
 #define STEERING_PIN 7
 

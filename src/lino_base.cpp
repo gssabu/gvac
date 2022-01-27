@@ -1,6 +1,6 @@
-#include "lino_base.h"
+#include "gvac_base.h"
 
-LinoBase::LinoBase():
+LinoBase::GvacBase():
     linear_velocity_x_(0),
     linear_velocity_y_(0),
     angular_velocity_z_(0),
@@ -11,10 +11,10 @@ LinoBase::LinoBase():
     heading_(0)
 {
     odom_publisher_ = nh_.advertise<nav_msgs::Odometry>("raw_odom", 50);
-    velocity_subscriber_ = nh_.subscribe("raw_vel", 50, &LinoBase::velCallback, this);
+    velocity_subscriber_ = nh_.subscribe("raw_vel", 50, &GvacBase::velCallback, this);
 }
 
-void LinoBase::velCallback(const lino_msgs::Velocities& vel)
+void GvacBase::velCallback(const gvac_msgs::Velocities& vel)
 {
     ros::Time current_time = ros::Time::now();
 

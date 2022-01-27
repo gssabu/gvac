@@ -21,11 +21,11 @@ install:
   - sudo apt-get install -y ros-$ROSDISTRO-tf2
   - sudo apt-get install -y ros-$ROSDISTRO-tf2-ros 
   - mkdir -p linorobot_ws/src && cd linorobot_ws/src
-  - git clone https://github.com/linorobot/linorobot
-  - git clone https://github.com/linorobot/lino_msgs
+  - git clone https://github.com/gssabu/gvac
+  - git clone https://github.com/gssabu/gvac
   - cd ../
   - catkin_make
 
 notifications:
   email:
-    - jimenojmm@gmail.com
+    - godsownglists3@gmail.com

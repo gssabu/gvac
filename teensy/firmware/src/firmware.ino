@@ -193,7 +193,7 @@ void moveBase()
     }
     else
     {
-        current_vel = kinematics.getVelocities(current_rpm1, current_rpm2, current_rpm1, current_rpm2);
+        current_vel = kinematics.getVelocities(current_rpm1, current_rpm2);
     }
     
     //pass velocities to publisher object

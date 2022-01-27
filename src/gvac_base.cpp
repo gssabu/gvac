@@ -1,6 +1,6 @@
 #include "gvac_base.h"
 
-LinoBase::GvacBase():
+GvacBase::GvacBase():
     linear_velocity_x_(0),
     linear_velocity_y_(0),
     angular_velocity_z_(0),

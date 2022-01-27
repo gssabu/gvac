@@ -1,12 +1,12 @@
-#ifndef _ROS_lino_msgs_Velocities_h
-#define _ROS_lino_msgs_Velocities_h
+#ifndef _ROS_gvac_msgs_Velocities_h
+#define _ROS_gvac_msgs_Velocities_h
 
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include "ros/msg.h"
 
-namespace lino_msgs
+namespace gvac_msgs
 {
 
   class Velocities : public ros::Msg
@@ -101,7 +101,7 @@ namespace lino_msgs
      return offset;
     }
 
-    const char * getType(){ return "lino_msgs/Velocities"; };
+    const char * getType(){ return "gvac_msgs/Velocities"; };
     const char * getMD5(){ return "0ee8ad4cb7809be2d5a0a76352fea86a"; };
 
   };

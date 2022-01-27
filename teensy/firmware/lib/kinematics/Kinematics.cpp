@@ -153,8 +153,8 @@ int Kinematics::getTotalWheels(base robot_base)
         case DIFFERENTIAL_DRIVE:    return 2;
         case ACKERMANN:             return 2;
         case ACKERMANN1:            return 1;
-        case SKID_STEER:            return 2;
-        case MECANUM:               return 2;
+        case SKID_STEER:            return 4;
+        case MECANUM:               return 4;
         default:                    return 2;
     }
 }

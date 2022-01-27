@@ -20,7 +20,7 @@ install:
   - export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
   - sudo apt-get install -y ros-$ROSDISTRO-tf2
   - sudo apt-get install -y ros-$ROSDISTRO-tf2-ros 
-  - mkdir -p linorobot_ws/src && cd linorobot_ws/src
+  - mkdir -p gvac_ws/src && cd gvac_ws/src
   - git clone https://github.com/gssabu/gvac
   - git clone https://github.com/gssabu/gvac
   - cd ../

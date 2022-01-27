@@ -1,12 +1,12 @@
-#ifndef LINO_BASE_CONFIG_H
-#define LINO_BASE_CONFIG_H
+#ifndef GVAC_BASE_CONFIG_H
+#define GVAC_BASE_CONFIG_H
 
 //uncomment the base you're building
-#define LINO_BASE DIFFERENTIAL_DRIVE // 2WD and Tracked robot w/ 2 motors
-// #define LINO_BASE SKID_STEER      // 4WD robot
-// #define LINO_BASE ACKERMANN       // Car-like steering robot w/ 2 motors
-// #define LINO_BASE ACKERMANN1      // Car-like steering robot w/ 1 motor
-// #define LINO_BASE MECANUM         // Mecanum drive robot
+#define GVAC_BASE DIFFERENTIAL_DRIVE // 2WD and Tracked robot w/ 2 motors
+// #define GVAC_BASE SKID_STEER      // 4WD robot
+// #define GVAC_BASE ACKERMANN       // Car-like steering robot w/ 2 motors
+// #define GVAC_BASE ACKERMANN1      // Car-like steering robot w/ 1 motor
+// #define GVAC_BASE MECANUM         // Mecanum drive robot
 
 //uncomment the motor driver you're using
 #define USE_L298_DRIVER
